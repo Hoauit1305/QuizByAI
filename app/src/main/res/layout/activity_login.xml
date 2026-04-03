@@ -5,6 +5,86 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/bg_main"
     tools:context=".activities.LoginActivity">
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/bg_rounded_card"
+        android:orientation="vertical"
+        android:layout_marginHorizontal="30dp"
+        android:layout_marginVertical="90dp">
+
+        <ImageView
+            android:id="@+id/imgv_login"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:srcCompat="@drawable/img_login"
+            android:layout_marginVertical="25dp"/>
+
+        <TextView
+            android:id="@+id/txt_welcome"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ems="10"
+            android:fontFamily="@font/roboto"
+            android:gravity="center"
+            android:text="@string/txt_welcome"
+            android:textColor="@color/primary_orange"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/txt_des_login"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="30dp"
+            android:layout_marginTop="10dp"
+            android:ems="10"
+            android:fontFamily="@font/roboto"
+            android:gravity="center"
+            android:text="@string/txt_description_login"
+            android:textColor="@color/secondary_white"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/btn_signin_goole"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/roboto"
+            android:text="@string/txt_btn_signin_google"
+            android:textColor="@color/black"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            app:backgroundTint="@color/primary_orange"
+            android:layout_marginHorizontal="25dp"
+            app:icon="@drawable/ic_google"
+            app:iconGravity="textStart"
+            app:iconSize="30dp"
+            app:iconTint="@null"
+            android:layout_marginTop="30dp"/>
+
+        <TextView
+            android:id="@+id/txt_or"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/roboto"
+            android:gravity="center"
+            android:text="or"
+            android:textColor="@color/secondary_white"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:layout_marginVertical="10dp"/>
+
+        <Button
+            android:id="@+id/btn_signin_guest"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Continue as Guest"
+            app:backgroundTint="@color/primary_white"
+            android:textColor="@color/black"
+            android:layout_marginHorizontal="25dp"/>
+    </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>
