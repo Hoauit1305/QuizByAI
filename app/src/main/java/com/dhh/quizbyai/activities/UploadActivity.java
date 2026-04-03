@@ -10,11 +10,13 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.dhh.quizbyai.R;
 
-public class UploadActivity extends AppCompatActivity {
+public class UploadActivity extends BaseActivity { // 1. Sửa AppCompatActivity thành BaseActivity
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Giữ nguyên đoạn code tràn viền mặc định của Android Studio
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_upload);
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
@@ -22,5 +24,8 @@ public class UploadActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+
+        // 2. Chỉ cần gọi thêm hàm này ở cuối cùng để kích hoạt thanh điều hướng
+        setupBottomNavigation();
     }
 }

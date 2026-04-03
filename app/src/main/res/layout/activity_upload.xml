@@ -99,13 +99,14 @@
                 android:background="@drawable/bg_rounded_card"
                 android:clickable="true"
                 android:focusable="true"
-                android:foreground="?attr/selectableItemBackground"> <TextView
-                android:id="@+id/textView6"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Recent Quiz"
-                android:textSize="12sp"
-                android:textColor="#96a6a8"/>
+                android:foreground="?attr/selectableItemBackground">
+                <TextView
+                    android:id="@+id/textView6"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Recent Quiz"
+                    android:textSize="12sp"
+                    android:textColor="#96a6a8"/>
 
                 <TextView
                     android:id="@+id/textView7"
@@ -129,13 +130,14 @@
                 android:background="@drawable/bg_rounded_card"
                 android:clickable="true"
                 android:focusable="true"
-                android:foreground="?attr/selectableItemBackground"> <TextView
-                android:id="@+id/textView8"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Saved Document"
-                android:textSize="12sp"
-                android:textColor="#96a6a8"/>
+                android:foreground="?attr/selectableItemBackground">
+                <TextView
+                    android:id="@+id/textView8"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Saved Document"
+                    android:textSize="12sp"
+                    android:textColor="#96a6a8"/>
 
                 <TextView
                     android:id="@+id/textView9"
@@ -152,4 +154,12 @@
         </LinearLayout>
 
     </LinearLayout>
+    <include
+        android:id="@+id/includedBottomNav"
+        layout="@layout/activity_bottom_nav"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 </androidx.constraintlayout.widget.ConstraintLayout>
