@@ -12,7 +12,13 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.QuizByAI">
         <activity
-            android:name=".MainActivity"
+            android:name=".activities.UploadActivity"
+            android:exported="false" />
+        <activity
+            android:name=".activities.LoginActivity"
+            android:exported="false" />
+        <activity
+            android:name=".activities.SplashActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
