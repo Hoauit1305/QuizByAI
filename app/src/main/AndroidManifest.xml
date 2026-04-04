@@ -13,9 +13,6 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.App.Starting">
         <activity
-            android:name=".activities.UploadActivity"
-            android:exported="false" />
-        <activity
             android:name=".activities.LoginActivity"
             android:exported="true">
             <intent-filter>
@@ -23,6 +20,11 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".activities.UploadActivity"
+            android:exported="false">
         </activity>
 
         <meta-data
