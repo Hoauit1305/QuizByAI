@@ -4,6 +4,9 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.widget.Button;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
@@ -13,13 +16,24 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.bumptech.glide.Glide;
 import com.dhh.quizbyai.R;
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInClient;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 public class UploadActivity extends BaseActivity {
 
     // Khai báo launcher để xử lý kết quả sau khi chọn file
     private ActivityResultLauncher<Intent> filePickerLauncher;
+    Button btnChooseFile;
+    ImageView img_avatar;
+    TextView txt_name, txt_gmail;
+    ImageButton btn_logout;
 
+    FirebaseAuth mAuth;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -40,8 +54,12 @@ public class UploadActivity extends BaseActivity {
         setupFilePicker();
 
         // 3. Ánh xạ nút bấm và xử lý sự kiện click
-        Button btnChooseFile = findViewById(R.id.button);
+        btnChooseFile = findViewById(R.id.button);
         btnChooseFile.setOnClickListener(v -> openFilePicker());
+
+        displayInfo();
+
+        logout();
     }
 
     private void setupFilePicker() {
@@ -73,5 +91,47 @@ public class UploadActivity extends BaseActivity {
         intent.addCategory(Intent.CATEGORY_OPENABLE);
 
         filePickerLauncher.launch(intent);
+    }
+
+    private void displayInfo(){
+        img_avatar = findViewById(R.id.img_avatar);
+        txt_name = findViewById(R.id.txt_Name);
+        txt_gmail = findViewById(R.id.txt_gmail);
+
+        mAuth = FirebaseAuth.getInstance();
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+
+        if (currentUser != null) {
+            txt_name.setText(currentUser.getDisplayName());
+            txt_gmail.setText(currentUser.getEmail());
+
+            if (currentUser.getPhotoUrl() != null) {
+                Glide.with(this)
+                        .load(currentUser.getPhotoUrl())
+                        .circleCrop()
+                        .into(img_avatar);
+            }
+        }
+    }
+
+    private void logout(){
+        btn_logout = findViewById(R.id.btn_logout);
+
+        btn_logout.setOnClickListener(v -> {
+            FirebaseAuth.getInstance().signOut();
+
+            GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN).build();
+            GoogleSignInClient googleSignInClient = GoogleSignIn.getClient(this, gso);
+
+            googleSignInClient.signOut().addOnCompleteListener(this, task -> {
+                Intent intent = new Intent(UploadActivity.this, LoginActivity.class);
+
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+
+                startActivity(intent);
+                finish();
+            });
+
+        });
     }
 }
