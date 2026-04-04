@@ -69,8 +69,12 @@ public class UploadActivity extends BaseActivity {
                     if (result.getResultCode() == RESULT_OK && result.getData() != null) {
                         Uri fileUri = result.getData().getData();
                         if (fileUri != null) {
-                            // Xử lý file sau khi chọn thành công (ví dụ: lấy tên file hoặc upload)
-                            Toast.makeText(this, "Đã chọn file: " + fileUri.getPath(), Toast.LENGTH_SHORT).show();
+                            // Hiển thị thông báo upload thành công
+                            Toast.makeText(this, "Upload thành công! Đang chuyển đến cấu hình...", Toast.LENGTH_SHORT).show();
+
+                            // Chuyển sang giao diện ConfigureQuizActivity
+                            Intent intent = new Intent(UploadActivity.this, ConfigureQuizActivity.class);
+                            startActivity(intent);
                         }
                     }
                 }

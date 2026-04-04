@@ -87,7 +87,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
                 android:fontFamily="@font/roboto"
-                android:text="Upload PDF or Word"
+                android:text="@string/upload_pdf_or_word"
                 android:textColor="@color/primary_white"
                 android:textSize="18sp"
                 android:textStyle="bold" />
@@ -98,7 +98,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="24dp"
                 android:fontFamily="@font/roboto"
-                android:text="Let our AI generate practice questions from your document."
+                android:text="@string/upload_description"
                 android:textAlignment="center"
                 android:textColor="@color/secondary_white"
                 android:textSize="14sp" />
@@ -109,7 +109,7 @@
                 android:layout_height="56dp"
                 android:backgroundTint="#e48810"
                 android:fontFamily="@font/roboto"
-                android:text="Choose File"
+                android:text="@string/btn_choose_file"
                 android:textAllCaps="false"
                 android:textColor="@color/black"
                 android:textSize="16sp"
@@ -123,7 +123,7 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
             android:fontFamily="@font/roboto"
-            android:text="Quick Access"
+            android:text="@string/quick_access"
             android:textColor="@color/primary_white"
             android:textSize="18sp"
             android:textStyle="bold" />
@@ -151,7 +151,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:fontFamily="@font/roboto"
-                    android:text="Recent Quiz"
+                    android:text="@string/recent_quiz"
                     android:textColor="@color/secondary_white"
                     android:textSize="12sp" />
 
@@ -161,7 +161,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
                     android:fontFamily="@font/roboto"
-                    android:text="Biology - Cells"
+                    android:text="@string/biology_cells"
                     android:textColor="@color/primary_white"
                     android:textSize="16sp"
                     android:textStyle="bold" />
@@ -185,7 +185,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:fontFamily="@font/roboto"
-                    android:text="Saved Document"
+                    android:text="@string/saved_document"
                     android:textColor="@color/secondary_white"
                     android:textSize="12sp" />
 
@@ -195,7 +195,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
                     android:fontFamily="@font/roboto"
-                    android:text="History Notes"
+                    android:text="@string/history_notes"
                     android:textColor="@color/primary_white"
                     android:textSize="16sp"
                     android:textStyle="bold" />

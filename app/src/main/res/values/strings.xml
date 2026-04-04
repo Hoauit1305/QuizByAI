@@ -3,4 +3,12 @@
     <string name="txt_welcome">Welcome to QuizByAI</string>
     <string name="txt_description_login">Upload your notes and let AI create quizzes to help you study smarter.</string>
     <string name="txt_btn_signin_google">Sign in with Google</string>
+    <string name="upload_pdf_or_word">Upload PDF or Word</string>
+    <string name="upload_description">Let our AI generate practice questions from your document.</string>
+    <string name="btn_choose_file">Choose File</string>
+    <string name="quick_access">Quick Access</string>
+    <string name="recent_quiz">Recent Quiz</string>
+    <string name="biology_cells">Biology - Cells</string>
+    <string name="saved_document">Saved Document</string>
+    <string name="history_notes">History Notes</string>
 </resources>
