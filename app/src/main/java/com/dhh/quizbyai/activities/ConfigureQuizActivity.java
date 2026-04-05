@@ -36,15 +36,15 @@ public class ConfigureQuizActivity extends BaseActivity { // Kế thừa BaseAct
         // Xử lý giao diện tràn viền (Edge-to-Edge)
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, 0);
             return insets;
         });
 
         // 3. Ánh xạ ID từ XML sang Java
-        seekBarQuestions = findViewById(R.id.seekBar);
-        txtSelected = findViewById(R.id.textView13);      // Dòng chữ "Selected: 20 questions"
-        btnStartGenerating = findViewById(R.id.button3);  // Nút tạo Quiz
-        btnBack = findViewById(R.id.button2);             // Nút quay lại
+        seekBarQuestions = findViewById(R.id.seekBar_NoQ);
+        txtSelected = findViewById(R.id.txt_selected_NoQ);      // Dòng chữ "Selected: 20 questions"
+        btnStartGenerating = findViewById(R.id.btn_start_gen);  // Nút tạo Quiz
+        btnBack = findViewById(R.id.btn_back);             // Nút quay lại
         chipGroupTime = findViewById(R.id.chipGroupTime); // Nhóm nút thời gian 15s, 30s, 60s
 
         // 4. Kích hoạt các tính năng trên màn hình

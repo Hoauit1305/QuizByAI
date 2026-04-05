@@ -13,4 +13,13 @@
     <string name="history_notes">History Notes</string>
     <string name="txt_name_guest">Guest</string>
     <string name="txt_gmail_guest">You are not loggin yet!</string>
+    <string name="txt_configurequiz">Configure Quiz</string>
+    <string name="txt_des_configurequiz">Set details before generation</string>
+    <string name="txt_back">Back</string>
+    <string name="txt_name_quiz">Name your Quiz</string>
+    <string name="txt_hint_name_quiz">Biology - Mitochondria Focus</string>
+    <string name="txt_NoQ">Number of Questions</string>
+    <string name="txt_selected">Selected: </string>
+    <string name="txt_TpQ">Time per Question</string>
+    <string name="txt_start_gen">Start Generating</string>
 </resources>
