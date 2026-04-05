@@ -11,8 +11,9 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:padding="24dp"
-        android:background="#0f1314">
+        android:background="#0f1314"
+        android:paddingTop="24dp"
+        android:paddingHorizontal="24dp">
 
         <TextView
             android:id="@+id/textView2"
@@ -152,7 +153,6 @@
             </LinearLayout>
 
         </LinearLayout>
-
     </LinearLayout>
     <include
         android:id="@+id/includedBottomNav"
