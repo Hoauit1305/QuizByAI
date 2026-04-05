@@ -11,4 +11,6 @@
     <string name="biology_cells">Biology - Cells</string>
     <string name="saved_document">Saved Document</string>
     <string name="history_notes">History Notes</string>
+    <string name="txt_name_guest">Guest</string>
+    <string name="txt_gmail_guest">You are not loggin yet!</string>
 </resources>

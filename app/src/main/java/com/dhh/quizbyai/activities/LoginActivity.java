@@ -48,8 +48,6 @@ public class LoginActivity extends AppCompatActivity {
 
         mAuth = FirebaseAuth.getInstance();
 
-        // SỬA TẠI ĐÂY: Dùng default_web_client_id thay vì hardcode chuỗi
-        // Nếu dòng dưới báo đỏ, hãy đảm bảo bạn đã thêm file google-services.json vào thư mục app/
         String webClientId = getString(R.string.default_web_client_id);
         Log.d(TAG, "Using System Web Client ID: " + webClientId);
 
@@ -61,6 +59,15 @@ public class LoginActivity extends AppCompatActivity {
         mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
 
         btnSignInWithGoogle.setOnClickListener(v -> signInWithGoogle());
+        btnSignInAsGuest.setOnClickListener(v -> {
+            Intent intent = new Intent(LoginActivity.this, UploadActivity.class);
+
+            intent.putExtra("IS_GUEST", true);
+
+            startActivity(intent);
+
+            finish();
+        });
 
     }
     private void signInWithGoogle() {

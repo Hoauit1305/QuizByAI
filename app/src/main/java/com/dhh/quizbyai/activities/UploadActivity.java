@@ -32,8 +32,8 @@ public class UploadActivity extends BaseActivity {
     ImageView img_avatar;
     TextView txt_name, txt_gmail;
     ImageButton btn_logout;
-
     FirebaseAuth mAuth;
+    boolean isGuest;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -102,18 +102,27 @@ public class UploadActivity extends BaseActivity {
         txt_name = findViewById(R.id.txt_Name);
         txt_gmail = findViewById(R.id.txt_gmail);
 
-        mAuth = FirebaseAuth.getInstance();
-        FirebaseUser currentUser = mAuth.getCurrentUser();
+        isGuest = getIntent().getBooleanExtra("IS_GUEST", false);
 
-        if (currentUser != null) {
-            txt_name.setText(currentUser.getDisplayName());
-            txt_gmail.setText(currentUser.getEmail());
+        if(isGuest){
+            txt_name.setText(R.string.txt_name_guest);
+            txt_gmail.setText(R.string.txt_gmail_guest);
 
-            if (currentUser.getPhotoUrl() != null) {
-                Glide.with(this)
-                        .load(currentUser.getPhotoUrl())
-                        .circleCrop()
-                        .into(img_avatar);
+            img_avatar.setImageResource(R.drawable.account_circle_24px);
+        } else {
+            mAuth = FirebaseAuth.getInstance();
+            FirebaseUser currentUser = mAuth.getCurrentUser();
+
+            if (currentUser != null) {
+                txt_name.setText(currentUser.getDisplayName());
+                txt_gmail.setText(currentUser.getEmail());
+
+                if (currentUser.getPhotoUrl() != null) {
+                    Glide.with(this)
+                            .load(currentUser.getPhotoUrl())
+                            .circleCrop()
+                            .into(img_avatar);
+                }
             }
         }
     }
@@ -122,20 +131,25 @@ public class UploadActivity extends BaseActivity {
         btn_logout = findViewById(R.id.btn_logout);
 
         btn_logout.setOnClickListener(v -> {
-            FirebaseAuth.getInstance().signOut();
+            Intent intent = new Intent(UploadActivity.this, LoginActivity.class);
 
-            GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN).build();
-            GoogleSignInClient googleSignInClient = GoogleSignIn.getClient(this, gso);
-
-            googleSignInClient.signOut().addOnCompleteListener(this, task -> {
-                Intent intent = new Intent(UploadActivity.this, LoginActivity.class);
-
+            if(isGuest){
                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-
                 startActivity(intent);
                 finish();
-            });
+            } else {
+                FirebaseAuth.getInstance().signOut();
 
+                GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN).build();
+                GoogleSignInClient googleSignInClient = GoogleSignIn.getClient(this, gso);
+
+                googleSignInClient.signOut().addOnCompleteListener(this, task -> {
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+
+                    startActivity(intent);
+                    finish();
+                });
+            }
         });
     }
 }
