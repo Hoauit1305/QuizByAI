@@ -29,4 +29,10 @@
     <string name="answer_B">B. Mitochondrion Produces cellular energy (ATP) B</string>
     <string name="answer_C">C. Rib Synthesizes proteins C</string>
     <string name="answer_D">D. Endoplasmic Reticulum Protein and lipid folding D</string>
+    <string name="my_quizzes">My Quizzes</string>
+    <string name="description_quiz">Review your past practice sessions</string>
+    <string name="title">Biology - Cell Structure</string>
+    <string name="date">May 2, 2026 • 12 Qs</string>
+    <string name="score">88%</string>
+    <string name="textscore">Score</string>
 </resources>
