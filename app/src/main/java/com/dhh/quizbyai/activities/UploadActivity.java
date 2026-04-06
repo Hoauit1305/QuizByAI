@@ -3,6 +3,7 @@ package com.dhh.quizbyai.activities;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -74,6 +75,10 @@ public class UploadActivity extends BaseActivity {
 
                             // Chuyển sang giao diện ConfigureQuizActivity
                             Intent intent = new Intent(UploadActivity.this, ConfigureQuizActivity.class);
+
+                            intent.putExtra("FILE_URI", fileUri.toString());
+                            Log.d("UPLOAD", "FILE_URI được đóng gói là: " + fileUri.toString());
+
                             startActivity(intent);
                         }
                     }
