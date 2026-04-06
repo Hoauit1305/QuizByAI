@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Trạng thái ĐÃ BẬT -->
+    <item android:state_checked="true">
+        <layer-list>
+            <!-- Thêm khoảng cách 4dp ở các cạnh để hình tròn trông nhỏ hơn track -->
+            <item android:top="6dp" android:bottom="6dp" android:left="6dp" android:right="6dp">
+                <shape android:shape="oval">
+                    <solid android:color="@color/black" />
+                    <!-- Kích thước thực tế sẽ bị co lại do layer-list padding ở trên -->
+                    <size android:width="15dp" android:height="15dp"/>
+                </shape>
+            </item>
+        </layer-list>
+    </item>
+
+    <!-- Trạng thái TẮT -->
+    <item>
+        <layer-list>
+            <item android:top="6dp" android:bottom="6dp" android:left="6dp" android:right="6dp">
+                <shape android:shape="oval">
+                    <solid android:color="@color/primary_orange" />
+                    <size android:width="15dp" android:height="15dp"/>
+                </shape>
+            </item>
+        </layer-list>
+    </item>
+</selector>
