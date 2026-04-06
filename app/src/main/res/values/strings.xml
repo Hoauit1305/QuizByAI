@@ -22,4 +22,11 @@
     <string name="txt_selected">Selected: </string>
     <string name="txt_TpQ">Time per Question</string>
     <string name="txt_start_gen">Start Generating</string>
+    <string name="number_question">Question 4 of 12</string>
+    <string name="rank">Rank #1</string>
+    <string name="question">Which organelle is responsible for producing ATP in eukaryotic cells?</string>
+    <string name="answer_A">A. N Stores genetic material A</string>
+    <string name="answer_B">B. Mitochondrion Produces cellular energy (ATP) B</string>
+    <string name="answer_C">C. Rib Synthesizes proteins C</string>
+    <string name="answer_D">D. Endoplasmic Reticulum Protein and lipid folding D</string>
 </resources>

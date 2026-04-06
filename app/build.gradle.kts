@@ -51,7 +51,6 @@
         // When using the BoM, don't specify versions in Firebase dependencies
         implementation("com.google.firebase:firebase-analytics")
 
-
         // Add the dependencies for any other desired Firebase products
         // https://firebase.google.com/docs/android/setup#available-libraries
 
@@ -59,4 +58,12 @@
         implementation("com.google.android.gms:play-services-auth:21.0.0")
 
         implementation("com.github.bumptech.glide:glide:4.16.0")
+
+        // Thư viện Google AI cho Android (Gemini)
+        implementation("com.google.ai.client.generativeai:generativeai:0.9.0")
+
+        implementation("com.google.code.gson:gson:2.10.1")
+
+        implementation("com.google.firebase:firebase-database")
+
     }
