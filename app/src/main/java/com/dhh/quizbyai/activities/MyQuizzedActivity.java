@@ -111,7 +111,7 @@ public class MyQuizzedActivity extends AppCompatActivity {
 
         // Set sự kiện khi nhấn vào cái khung xám này
         itemView.setOnClickListener(v -> {
-            Intent intent = new Intent(MyQuizzedActivity.this, QuestionActivity.class);
+            Intent intent = new Intent(MyQuizzedActivity.this, QuestionDetailActivity.class);
             intent.putExtra("QUIZ_ID", quizId); // Truyền ID sang màn hình Question
             startActivity(intent);
         });
