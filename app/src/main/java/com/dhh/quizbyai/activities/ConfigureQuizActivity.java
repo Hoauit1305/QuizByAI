@@ -35,6 +35,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.gson.Gson;
+import com.google.firebase.database.DatabaseReference;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -236,11 +237,23 @@ public class ConfigureQuizActivity extends BaseActivity {
                 quizMap.put("creatorId", currentUser.getUid());
                 quizMap.put("creatorEmail", currentUser.getEmail());
 
-                FirebaseDatabase.getInstance().getReference("Quizzes")
-                        .push().setValue(quizMap)
+                // 1. Tách riêng lệnh push() ra và gán nó vào biến newQuizRef
+                DatabaseReference newQuizRef = FirebaseDatabase.getInstance("https://quizbyai-4d9d2-default-rtdb.asia-southeast1.firebasedatabase.app").getReference("Quizzes").push();
+
+                // 2. Lấy cái ID vừa được sinh ra (ví dụ: -Nxx_Mã_ID_Ngẫu_Nhiên)
+                String quizId = newQuizRef.getKey();
+
+                // 3. Tiến hành đẩy dữ liệu (quizMap) vào nhánh có ID đó
+                newQuizRef.setValue(quizMap)
                         .addOnSuccessListener(aVoid -> {
                             showSuccess("Lưu Quiz thành công!");
                             setLoadingState(false);
+
+                            // 4. CHUYỂN MÀN HÌNH VÀ GỬI KÈM QUIZ_ID CHO QUESTION ACTIVITY CỦA BẠN
+                            android.content.Intent intent = new android.content.Intent(ConfigureQuizActivity.this, QuestionActivity.class);
+                            intent.putExtra("QUIZ_ID", quizId);
+                            startActivity(intent);
+
                             finish();
                         })
                         .addOnFailureListener(e -> handleError("Lỗi Database: " + e.getMessage()));
