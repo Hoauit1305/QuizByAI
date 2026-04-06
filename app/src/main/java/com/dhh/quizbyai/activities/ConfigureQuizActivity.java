@@ -50,7 +50,7 @@ public class ConfigureQuizActivity extends BaseActivity {
 
     private static final String TAG = "AI_DEBUG";
     private static final String MODEL_NAME = "gemini-2.5-flash";
-    private static final String API_KEY = "AIzaSyD3XFqYmHnWorpUVBEuXOEQiaVp--SBGpI";
+    private static final String API_KEY = "AIzaSyArNcYbeB41NYlYh6mEhL_cE9EVYROB8Qg";
     private boolean isGuest = false;
 
     // UI Elements
@@ -223,6 +223,8 @@ public class ConfigureQuizActivity extends BaseActivity {
             quizMap.put("documentName", docName);
             quizMap.put("documentUrl", fileUrl); // Lưu chuỗi rỗng để cấu trúc dữ liệu đồng nhất
             quizMap.put("createdAt", System.currentTimeMillis());
+            quizMap.put("score", 0);
+            quizMap.put("questionCount", questions.size());
 
             if (isGuest) {
                 saveQuizLocally(quizMap);
@@ -250,7 +252,7 @@ public class ConfigureQuizActivity extends BaseActivity {
                             setLoadingState(false);
 
                             // 4. CHUYỂN MÀN HÌNH VÀ GỬI KÈM QUIZ_ID CHO QUESTION ACTIVITY CỦA BẠN
-                            android.content.Intent intent = new android.content.Intent(ConfigureQuizActivity.this, QuestionActivity.class);
+                            android.content.Intent intent = new android.content.Intent(ConfigureQuizActivity.this, MyQuizzedActivity.class);
                             intent.putExtra("QUIZ_ID", quizId);
                             startActivity(intent);
 

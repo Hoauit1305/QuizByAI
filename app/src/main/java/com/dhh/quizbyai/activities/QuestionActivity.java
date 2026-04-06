@@ -47,7 +47,7 @@ public class QuestionActivity extends AppCompatActivity {
     private final int COLOR_CORRECT = Color.parseColor("#4CAF50"); // Xanh lá
     private final int COLOR_WRONG = Color.parseColor("#F44336");   // Đỏ
     private final int COLOR_DISABLED = Color.parseColor("#9E9E9E"); // Xám
-
+    private int correctAnswersCount = 0;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -122,8 +122,7 @@ public class QuestionActivity extends AppCompatActivity {
     private void loadQuestion(int index) {
         if (index >= questionList.size()) {
             Toast.makeText(this, "Bạn đã hoàn thành bài trắc nghiệm!", Toast.LENGTH_LONG).show();
-            // TODO: Chuyển sang màn hình ResultActivity (Hiển thị điểm số)
-            finish();
+            calculateAndSaveScore(); // GỌI HÀM TÍNH ĐIỂM
             return;
         }
 
@@ -199,6 +198,7 @@ public class QuestionActivity extends AppCompatActivity {
         if (cleanSelected.equals(cleanCorrect)) {
             // TRẢ LỜI ĐÚNG
             selectedBtn.setBackgroundTintList(ColorStateList.valueOf(COLOR_CORRECT));
+            correctAnswersCount++;
         } else {
             // TRẢ LỜI SAI
             selectedBtn.setBackgroundTintList(ColorStateList.valueOf(COLOR_WRONG));
@@ -273,5 +273,22 @@ public class QuestionActivity extends AppCompatActivity {
         if (countDownTimer != null) {
             countDownTimer.cancel();
         }
+    }
+    private void calculateAndSaveScore() {
+        int totalQuestions = questionList.size();
+        // Tính phần trăm: (câu đúng / tổng số câu) * 100
+        int finalScore = Math.round(((float) correctAnswersCount / totalQuestions) * 100);
+
+        DatabaseReference ref = FirebaseDatabase.getInstance("https://quizbyai-4d9d2-default-rtdb.asia-southeast1.firebasedatabase.app").getReference("Quizzes").child(quizId);
+
+        // Cập nhật trường score lên Firebase
+        ref.child("score").setValue(finalScore).addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                Toast.makeText(this, "Điểm của bạn: " + finalScore + "%", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "Lỗi lưu điểm", Toast.LENGTH_SHORT).show();
+            }
+            finish(); // Đóng Activity này, tự động quay về MyQuizzedActivity
+        });
     }
 }

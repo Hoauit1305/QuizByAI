@@ -17,6 +17,9 @@
             android:name=".activities.QuestionDetailActivity"
             android:exported="false" />
         <activity
+            android:name=".activities.MyQuizzedActivity"
+            android:exported="false" />
+        <activity
             android:name=".activities.QuestionActivity"
             android:exported="false" />
         <activity
