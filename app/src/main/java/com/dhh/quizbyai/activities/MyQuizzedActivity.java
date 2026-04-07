@@ -28,7 +28,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
-public class MyQuizzedActivity extends AppCompatActivity {
+public class MyQuizzedActivity extends BaseActivity {
 
     private LinearLayout quizListContainer;
 
@@ -43,6 +43,8 @@ public class MyQuizzedActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+
+        setupBottomNavigation();
 
         quizListContainer = findViewById(R.id.quiz_list_container);
 
