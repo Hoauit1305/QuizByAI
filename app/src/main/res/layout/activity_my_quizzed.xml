@@ -14,47 +14,55 @@
         android:padding="24dp"
         android:background="@color/black">
 
+        <TextView
+            android:id="@+id/textView18"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/my_quizzes"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="@color/primary_white"/>
+
+        <TextView
+            android:id="@+id/textView19"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="@string/description_quiz"
+            android:textSize="14sp"
+            android:textColor="@color/secondary_white"/>
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
+            android:layout_marginTop="20dp"
             android:layout_marginBottom="24dp">
 
-            <LinearLayout
+            <EditText
+                android:id="@+id/name_quiz"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:layout_weight="1">
-
-                <TextView
-                    android:id="@+id/textView18"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/my_quizzes"
-                    android:textSize="24sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/primary_white"/>
-
-                <TextView
-                    android:id="@+id/textView19"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="@string/description_quiz"
-                    android:textSize="14sp"
-                    android:textColor="@color/secondary_white"/>
-
-            </LinearLayout>
+                android:background="@drawable/bg_rounded_card"
+                android:ems="10"
+                android:inputType="text"
+                android:padding="16dp"
+                android:hint="@string/txt_hint_name_quiz"
+                android:textColor="@color/primary_white"
+                android:textColorHint="@color/secondary_white"
+                android:fontFamily="@font/roboto"
+                android:layout_weight="1"
+                android:layout_marginEnd="16dp" />
 
             <ImageButton
-                android:id="@+id/btn_logout"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
+                android:id="@+id/btn_find"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:scaleType="fitCenter"
                 android:background="@android:color/transparent"
                 app:srcCompat="@drawable/ic_find" />
         </LinearLayout>
-
         <ScrollView
             android:layout_width="match_parent"
             android:layout_height="0dp"
@@ -70,6 +78,7 @@
             </LinearLayout>
         </ScrollView>
     </LinearLayout>
+
     <include
         android:id="@+id/includedBottomNav"
         layout="@layout/activity_bottom_nav"

@@ -63,7 +63,7 @@ public class QuestionDetailActivity extends AppCompatActivity {
     }
 
     protected void loadQuestionDetail(String quizID){
-        DatabaseReference ref = FirebaseDatabase.getInstance(getString(R.string.firebase_database_url))
+        DatabaseReference ref = FirebaseDatabase.getInstance()
                 .getReference("Quizzes")
                 .child(quizID);
 

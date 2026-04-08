@@ -4,6 +4,8 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -31,6 +33,8 @@ import java.util.Locale;
 public class MyQuizzedActivity extends BaseActivity {
 
     private LinearLayout quizListContainer;
+    private ImageButton btn_find;
+    private EditText edt_name_quiz; // 1. Khai báo thêm EditText
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,47 +50,79 @@ public class MyQuizzedActivity extends BaseActivity {
 
         setupBottomNavigation();
 
+        // 2. Ánh xạ UI
         quizListContainer = findViewById(R.id.quiz_list_container);
+        btn_find = findViewById(R.id.btn_find);
+        edt_name_quiz = findViewById(R.id.name_quiz);
 
-        // Gọi hàm load dữ liệu
-        loadMyQuizzes();
+        // 3. Xử lý sự kiện click nút Find
+        btn_find.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Lấy chữ người dùng nhập và xóa khoảng trắng thừa ở 2 đầu
+                String keyword = edt_name_quiz.getText().toString().trim();
+
+                // Gọi hàm load dữ liệu và truyền từ khóa vào
+                loadMyQuizzes(keyword);
+            }
+        });
+
+        // 4. Gọi hàm load dữ liệu mặc định ban đầu (Truyền chuỗi rỗng để hiển thị tất cả)
+        loadMyQuizzes("");
     }
 
-    private void loadMyQuizzes() {
+    // 5. Cập nhật hàm load có thêm tham số searchKeyword
+    private void loadMyQuizzes(String searchKeyword) {
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         if (currentUser == null) return;
 
-        DatabaseReference ref = FirebaseDatabase.getInstance(getString(R.string.firebase_database_url)).getReference("Quizzes");
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("Quizzes");
 
-        // Lấy dữ liệu (có thể lọc theo creatorId nếu team bạn đã học)
-        ref.orderByChild("creatorId").equalTo(currentUser.getUid()).addValueEventListener(new ValueEventListener() {
+        // LƯU Ý QUAN TRỌNG: Đổi addValueEventListener thành addListenerForSingleValueEvent
+        // Để tránh việc bấm tìm kiếm nhiều lần sinh ra nhiều luồng lắng nghe chồng chéo làm lag app.
+        ref.orderByChild("creatorId").equalTo(currentUser.getUid()).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                quizListContainer.removeAllViews(); // Xoá danh sách cũ trước khi load mới
+                quizListContainer.removeAllViews(); // Xoá danh sách cũ
+
+                boolean isFound = false; // Biến cờ để kiểm tra xem có tìm thấy kết quả nào không
 
                 for (DataSnapshot quizSnap : snapshot.getChildren()) {
-                    String quizId = quizSnap.getKey();
                     String title = quizSnap.child("title").getValue(String.class);
-                    Long createdAt = quizSnap.child("createdAt").getValue(Long.class);
-                    Integer questionCount = quizSnap.child("questionCount").getValue(Integer.class);
-                    Integer score = quizSnap.child("score").getValue(Integer.class);
-
-                    // Xử lý dữ liệu null phòng hờ
                     if (title == null) title = "Untitled Quiz";
-                    if (questionCount == null) questionCount = 0;
-                    if (score == null) score = 0;
 
-                    // Format ngày tháng (vd: May 2, 2026)
-                    String dateStr = "Unknown Date";
-                    if (createdAt != null) {
-                        SimpleDateFormat sdf = new SimpleDateFormat("MMM d, yyyy", Locale.US);
-                        dateStr = sdf.format(new Date(createdAt));
+                    // LOGIC TÌM KIẾM:
+                    // Nếu từ khóa rỗng (mặc định) HOẶC title có chứa từ khóa (đổi hết về chữ thường để không phân biệt hoa/thường)
+                    if (searchKeyword.isEmpty() || title.toLowerCase().contains(searchKeyword.toLowerCase())) {
+
+                        isFound = true; // Đánh dấu là đã có ít nhất 1 kết quả được vẽ ra màn hình
+
+                        String quizId = quizSnap.getKey();
+                        Long createdAt = quizSnap.child("createdAt").getValue(Long.class);
+                        Integer questionCount = quizSnap.child("questionCount").getValue(Integer.class);
+                        Integer score = quizSnap.child("score").getValue(Integer.class);
+
+                        // Xử lý dữ liệu null phòng hờ
+                        if (questionCount == null) questionCount = 0;
+                        if (score == null) score = 0;
+
+                        // Format ngày tháng
+                        String dateStr = "Unknown Date";
+                        if (createdAt != null) {
+                            SimpleDateFormat sdf = new SimpleDateFormat("MMM d, yyyy", Locale.US);
+                            dateStr = sdf.format(new Date(createdAt));
+                        }
+
+                        String infoText = dateStr + " • " + questionCount + " Qs";
+
+                        // Vẽ lên UI
+                        addQuizItemToView(quizId, title, infoText, score);
                     }
+                }
 
-                    String infoText = dateStr + " • " + questionCount + " Qs";
-
-                    // Gọi hàm tạo Giao diện cho từng Quiz
-                    addQuizItemToView(quizId, title, infoText, score);
+                // Kiểm tra sau khi chạy xong vòng lặp, nếu có nhập từ khóa mà không tìm thấy gì
+                if (!isFound && !searchKeyword.isEmpty()) {
+                    Toast.makeText(MyQuizzedActivity.this, "Không tìm thấy kết quả!", Toast.LENGTH_SHORT).show();
                 }
             }
 
