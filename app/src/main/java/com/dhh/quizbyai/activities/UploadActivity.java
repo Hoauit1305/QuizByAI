@@ -26,7 +26,6 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
 public class UploadActivity extends BaseActivity {
-
     // Khai báo launcher để xử lý kết quả sau khi chọn file
     private ActivityResultLauncher<Intent> filePickerLauncher;
     Button btnChooseFile;
@@ -107,7 +106,9 @@ public class UploadActivity extends BaseActivity {
         txt_name = findViewById(R.id.txt_Name);
         txt_gmail = findViewById(R.id.txt_gmail);
 
-        isGuest = getIntent().getBooleanExtra("IS_GUEST", false);
+//        isGuest = getIntent().getBooleanExtra("IS_GUEST", false);
+        isGuest = getSharedPreferences("AppPrefs", MODE_PRIVATE)
+                .getBoolean("IS_GUEST", false);
 
         if(isGuest){
             txt_name.setText(R.string.txt_name_guest);
@@ -131,7 +132,6 @@ public class UploadActivity extends BaseActivity {
             }
         }
     }
-
     private void logout(){
         btn_logout = findViewById(R.id.btn_logout);
 
@@ -139,18 +139,28 @@ public class UploadActivity extends BaseActivity {
             Intent intent = new Intent(UploadActivity.this, LoginActivity.class);
 
             if(isGuest){
+                getSharedPreferences("AppPrefs", MODE_PRIVATE)
+                        .edit()
+                        .putBoolean("IS_GUEST", false)
+                        .apply();
                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                 startActivity(intent);
                 finish();
             } else {
+                // 1. Đăng xuất khỏi Firebase
                 FirebaseAuth.getInstance().signOut();
 
-                GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN).build();
-                GoogleSignInClient googleSignInClient = GoogleSignIn.getClient(this, gso);
+                // 2. Lấy lại đúng cấu hình đăng nhập ban đầu
+                String webClientId = getString(R.string.default_web_client_id);
+                GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                        .requestIdToken(webClientId)
+                        .requestEmail()
+                        .build();
 
+                // 3. Tiến hành đăng xuất khỏi Google
+                GoogleSignInClient googleSignInClient = GoogleSignIn.getClient(this, gso);
                 googleSignInClient.signOut().addOnCompleteListener(this, task -> {
                     intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-
                     startActivity(intent);
                     finish();
                 });

@@ -35,6 +35,23 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        mAuth = FirebaseAuth.getInstance();
+        // 1. Kiểm tra có phải khách ?
+        boolean isGuest = getSharedPreferences("AppPrefs", MODE_PRIVATE)
+                .getBoolean("IS_GUEST", false);
+
+        // 2. Kiểm tra có phải người dùng đăng nhập ?
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+
+        if(currentUser != null || isGuest){
+            // Chuyển thẳng tới UploadActivity
+            Intent intent = new Intent(LoginActivity.this, UploadActivity.class);
+            startActivity(intent);
+            finish();
+            return;
+        }
+
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_login);
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
@@ -46,11 +63,7 @@ public class LoginActivity extends AppCompatActivity {
         btnSignInWithGoogle = findViewById(R.id.btn_signin_goole);
         btnSignInAsGuest = findViewById(R.id.btn_signin_guest);
 
-        mAuth = FirebaseAuth.getInstance();
-
         String webClientId = getString(R.string.default_web_client_id);
-        Log.d(TAG, "Using System Web Client ID: " + webClientId);
-
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestIdToken(webClientId)
                 .requestEmail()
@@ -59,15 +72,7 @@ public class LoginActivity extends AppCompatActivity {
         mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
 
         btnSignInWithGoogle.setOnClickListener(v -> signInWithGoogle());
-        btnSignInAsGuest.setOnClickListener(v -> {
-            Intent intent = new Intent(LoginActivity.this, UploadActivity.class);
-
-            intent.putExtra("IS_GUEST", true);
-
-            startActivity(intent);
-
-            finish();
-        });
+        btnSignInAsGuest.setOnClickListener(v -> signInAsGuest());
 
     }
     private void signInWithGoogle() {
@@ -76,6 +81,19 @@ public class LoginActivity extends AppCompatActivity {
             Intent signInIntent = mGoogleSignInClient.getSignInIntent();
             startActivityForResult(signInIntent, RC_SIGN_IN);
         });
+    }
+    private void signInAsGuest(){
+        //Lưu trạng thái đăng nhập vào bộ nhớ
+        getSharedPreferences("AppPrefs", MODE_PRIVATE)
+                .edit()
+                .putBoolean("IS_GUEST", true)
+                .apply();
+
+        Intent intent = new Intent(LoginActivity.this, UploadActivity.class);
+//        intent.putExtra("IS_GUEST", true);
+        startActivity(intent);
+
+        finish();
     }
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -103,7 +121,6 @@ public class LoginActivity extends AppCompatActivity {
             }
         }
     }
-
     private void firebaseAuthWithGoogle(String idToken) {
         AuthCredential credential = GoogleAuthProvider.getCredential(idToken, null);
         mAuth.signInWithCredential(credential)
