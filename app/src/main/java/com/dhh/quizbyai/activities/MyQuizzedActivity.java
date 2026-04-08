@@ -40,7 +40,7 @@ public class MyQuizzedActivity extends BaseActivity {
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, 0);
             return insets;
         });
 
@@ -114,7 +114,7 @@ public class MyQuizzedActivity extends BaseActivity {
         // Set sự kiện khi nhấn vào cái khung xám này
         itemView.setOnClickListener(v -> {
             Intent intent = new Intent(MyQuizzedActivity.this, QuestionDetailActivity.class);
-            intent.putExtra("QUIZ_ID", quizId); // Truyền ID sang màn hình Question
+            intent.putExtra("QUIZ_ID", quizId); // Truyền ID sang màn hình QuestionDetail
             startActivity(intent);
         });
 

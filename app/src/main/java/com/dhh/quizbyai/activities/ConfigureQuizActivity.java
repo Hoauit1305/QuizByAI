@@ -50,7 +50,7 @@ public class ConfigureQuizActivity extends BaseActivity {
 
     private static final String TAG = "AI_DEBUG";
     private static final String MODEL_NAME = "gemini-2.5-flash";
-    private static final String API_KEY = "AIzaSyArNcYbeB41NYlYh6mEhL_cE9EVYROB8Qg";
+    private static final String API_KEY = "AIzaSyCtwefv0KYNwLVtzvtF0GQQ9HgVFf_IckQ";
     private boolean isGuest = false;
 
     // UI Elements
