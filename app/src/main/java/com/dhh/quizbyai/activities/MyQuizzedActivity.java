@@ -56,7 +56,7 @@ public class MyQuizzedActivity extends BaseActivity {
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         if (currentUser == null) return;
 
-        DatabaseReference ref = FirebaseDatabase.getInstance("https://quizbyai-4d9d2-default-rtdb.asia-southeast1.firebasedatabase.app").getReference("Quizzes");
+        DatabaseReference ref = FirebaseDatabase.getInstance(getString(R.string.firebase_database_url)).getReference("Quizzes");
 
         // Lấy dữ liệu (có thể lọc theo creatorId nếu team bạn đã học)
         ref.orderByChild("creatorId").equalTo(currentUser.getUid()).addValueEventListener(new ValueEventListener() {

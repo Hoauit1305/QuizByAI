@@ -63,7 +63,7 @@ public class QuestionDetailActivity extends AppCompatActivity {
     }
 
     protected void loadQuestionDetail(String quizID){
-        DatabaseReference ref = FirebaseDatabase.getInstance("https://quizbyai-4d9d2-default-rtdb.asia-southeast1.firebasedatabase.app")
+        DatabaseReference ref = FirebaseDatabase.getInstance(getString(R.string.firebase_database_url))
                 .getReference("Quizzes")
                 .child(quizID);
 

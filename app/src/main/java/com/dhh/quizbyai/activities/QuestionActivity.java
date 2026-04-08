@@ -83,7 +83,7 @@ public class QuestionActivity extends AppCompatActivity {
     }
 
     private void fetchQuizDataFromFirebase() {
-        DatabaseReference ref = FirebaseDatabase.getInstance("https://quizbyai-4d9d2-default-rtdb.asia-southeast1.firebasedatabase.app").getReference("Quizzes").child(quizId);
+        DatabaseReference ref = FirebaseDatabase.getInstance(getString(R.string.firebase_database_url)).getReference("Quizzes").child(quizId);
         ref.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
