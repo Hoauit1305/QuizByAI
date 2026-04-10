@@ -240,7 +240,7 @@ public class ConfigureQuizActivity extends BaseActivity {
                 quizMap.put("creatorEmail", currentUser.getEmail());
 
                 // 1. Tách riêng lệnh push() ra và gán nó vào biến newQuizRef
-                DatabaseReference newQuizRef = FirebaseDatabase.getInstance("https://quizbyai-4d9d2-default-rtdb.asia-southeast1.firebasedatabase.app").getReference("Quizzes").push();
+                DatabaseReference newQuizRef = FirebaseDatabase.getInstance(getString(R.string.firebase_database_url)).getReference("Quizzes").push();
 
                 // 2. Lấy cái ID vừa được sinh ra (ví dụ: -Nxx_Mã_ID_Ngẫu_Nhiên)
                 String quizId = newQuizRef.getKey();

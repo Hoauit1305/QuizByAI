@@ -9,6 +9,4 @@
     app:itemIconTint="@color/primary_orange"
     app:itemTextColor="@color/secondary_white"
     app:menu="@menu/bottom_nav_menu"
-    android:layout_gravity="bottom"
-    app:itemPaddingTop="15dp"
-    app:itemPaddingBottom="15dp"/>
+    android:layout_gravity="bottom"/>

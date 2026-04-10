@@ -1,5 +1,6 @@
 package com.dhh.quizbyai.activities;
 
+import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -21,14 +22,19 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.dhh.quizbyai.R;
 import com.dhh.quizbyai.models.QuestionModel;
+import com.google.common.reflect.TypeToken;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.gson.Gson;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class QuestionActivity extends AppCompatActivity {
 
@@ -279,16 +285,100 @@ public class QuestionActivity extends AppCompatActivity {
         // Tính phần trăm: (câu đúng / tổng số câu) * 100
         int finalScore = Math.round(((float) correctAnswersCount / totalQuestions) * 100);
 
-        DatabaseReference ref = FirebaseDatabase.getInstance("https://quizbyai-4d9d2-default-rtdb.asia-southeast1.firebasedatabase.app").getReference("Quizzes").child(quizId);
+        // Tạo một Gói dữ liệu cho lần làm bài (Attempt) này
+        Map<String, Object> attemptData = new HashMap<>();
+        attemptData.put("timestamp", System.currentTimeMillis());
+        attemptData.put("score", finalScore);
 
-        // Cập nhật trường score lên Firebase
-        ref.child("score").setValue(finalScore).addOnCompleteListener(task -> {
-            if (task.isSuccessful()) {
-                Toast.makeText(this, "Điểm của bạn: " + finalScore + "%", Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(this, "Lỗi lưu điểm", Toast.LENGTH_SHORT).show();
+        // Kiểm tra xem là Khách hay User đang đăng nhập
+        SharedPreferences prefs = getSharedPreferences("AppPrefs", MODE_PRIVATE);
+        boolean isGuest = prefs.getBoolean("IS_GUEST", false);
+
+        if (isGuest) {
+            // ==========================================
+            // 1. XỬ LÝ LƯU LỊCH SỬ CHO KHÁCH (MÁY LOCAL)
+            // ==========================================
+            long createdAtTarget = getIntent().getLongExtra("CREATED_AT", -1);
+            if (createdAtTarget == -1) {
+                finish();
+                return;
             }
-            finish(); // Đóng Activity này, tự động quay về MyQuizzedActivity
-        });
+
+            SharedPreferences guestPrefs = getSharedPreferences("GuestData", MODE_PRIVATE);
+            String existingJson = guestPrefs.getString("local_quizzes", "[]");
+            Gson gson = new Gson();
+            Type listType = new TypeToken<List<Map<String, Object>>>(){}.getType();
+            List<Map<String, Object>> localQuizList = gson.fromJson(existingJson, listType);
+
+            if (localQuizList != null) {
+                for (Map<String, Object> quiz : localQuizList) {
+                    if (quiz.containsKey("createdAt")) {
+                        long currentCreatedAt = ((Number) quiz.get("createdAt")).longValue();
+
+                        if (currentCreatedAt == createdAtTarget) {
+                            // A. Thêm vào mảng History
+                            List<Map<String, Object>> historyList;
+                            if (quiz.containsKey("history")) {
+                                historyList = (List<Map<String, Object>>) quiz.get("history");
+                            } else {
+                                historyList = new ArrayList<>();
+                            }
+                            historyList.add(attemptData);
+                            quiz.put("history", historyList);
+
+                            // B. Kiểm tra Kỷ lục mới (High Score)
+                            int oldScore = quiz.containsKey("score") ? ((Number) quiz.get("score")).intValue() : 0;
+                            if (finalScore > oldScore) {
+                                quiz.put("score", finalScore); // Chỉ ghi đè nếu điểm mới cao hơn
+                            }
+                            break;
+                        }
+                    }
+                }
+                // Lưu lại sổ tay
+                guestPrefs.edit().putString("local_quizzes", gson.toJson(localQuizList)).apply();
+            }
+
+            Toast.makeText(this, "Điểm của bạn: " + finalScore + "%", Toast.LENGTH_SHORT).show();
+            finish();
+
+        } else {
+            // ==========================================
+            // 2. XỬ LÝ LƯU LỊCH SỬ CHO USER (FIREBASE)
+            // ==========================================
+            if (quizId == null) {
+                finish();
+                return;
+            }
+
+            // Không cần gán cứng URL nữa, dùng Cách 1 cho gọn nhé
+            DatabaseReference ref = FirebaseDatabase.getInstance().getReference("Quizzes").child(quizId);
+
+            // A. Bơm lần làm bài này vào nhánh "history"
+            ref.child("history").push().setValue(attemptData);
+
+            // B. Kéo điểm cũ về để so sánh xem có được Kỷ lục mới không
+            ref.child("score").addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    Integer oldScore = snapshot.getValue(Integer.class);
+
+                    // Nếu chưa có điểm cũ, hoặc điểm mới cao hơn điểm cũ thì cập nhật
+                    if (oldScore == null || finalScore > oldScore) {
+                        ref.child("score").setValue(finalScore);
+                    }
+
+//                    Toast.makeText(QuestionDetailActivity.this, "Điểm của bạn: " + finalScore + "%", Toast.LENGTH_SHORT).show();
+                    finish(); // Đóng Activity, quay về màn hình trước
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
+                    // Nếu bị lỗi mạng không check được Kỷ lục, vẫn báo điểm cho họ vui và thoát
+//                    Toast.makeText(QuestionDetailActivity.this, "Điểm của bạn: " + finalScore + "%", Toast.LENGTH_SHORT).show();
+                    finish();
+                }
+            });
+        }
     }
 }
