@@ -86,7 +86,7 @@ public class MyQuizzedActivity extends BaseActivity {
                     String infoText = dateStr + " • " + questionCount + " Qs";
 
                     // Gọi hàm tạo Giao diện cho từng Quiz
-                    addQuizItemToView(quizId, title, infoText, score);
+                    addQuizItemToView(quizId, title, infoText, score, createdAt);
                 }
             }
 
@@ -97,7 +97,7 @@ public class MyQuizzedActivity extends BaseActivity {
         });
     }
 
-    private void addQuizItemToView(String quizId, String title, String info, int score) {
+    private void addQuizItemToView(String quizId, String title, String info, int score, long createdAt) {
         // Inflate layout item_quiz_layout.xml
         View itemView = LayoutInflater.from(this).inflate(R.layout.item_quiz_layout, quizListContainer, false);
 
@@ -115,6 +115,7 @@ public class MyQuizzedActivity extends BaseActivity {
         itemView.setOnClickListener(v -> {
             Intent intent = new Intent(MyQuizzedActivity.this, QuestionDetailActivity.class);
             intent.putExtra("QUIZ_ID", quizId); // Truyền ID sang màn hình QuestionDetail
+            intent.putExtra("CREATED_AT", createdAt);
             startActivity(intent);
         });
 

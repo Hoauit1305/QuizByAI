@@ -32,7 +32,18 @@ public class QuizModel {
         return (questions != null) ? questions.size() : 0;
     }
     //Hàm tiện ích để lấy tổng thời gian
-    public int getTotalTime(){
-        return getQuestionCount() * timePerQuestion;
+    public String getTotalTime(){
+        int totalTime = getQuestionCount() * timePerQuestion;
+        int min = totalTime / 60;
+        int sec = totalTime % 60;
+        String result = "";
+
+        if(min != 0){
+            result +=  min + "m";
+        }
+        if(sec != 0){
+            result += sec + "s";
+        }
+        return result;
     }
 }

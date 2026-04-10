@@ -38,6 +38,7 @@
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
+                    android:layout_marginLeft="5dp"
                     android:layout_weight="3"
                     android:gravity="center_vertical"
                     android:orientation="vertical">
@@ -60,7 +61,17 @@
                         android:text="May 2, 2026"
                         android:textColor="@color/secondary_white"
                         android:textStyle="bold" />
+
                 </LinearLayout>
+
+                <ImageButton
+                    android:id="@+id/btn_delete_quiz"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="13dp"
+                    android:layout_weight="1"
+                    android:background="@android:color/transparent"
+                    app:srcCompat="@drawable/close_24px" />
 
             </LinearLayout>
 
@@ -221,21 +232,23 @@
                 android:textStyle="bold"
                 app:cornerRadius="15dp"
                 android:layout_marginHorizontal="20dp"/>
+
             <Button
                 android:id="@+id/btn_preview"
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
-                android:backgroundTint="@color/black"
+                android:layout_marginHorizontal="20dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="5dp"
+                android:backgroundTint="@color/primary_white"
                 android:fontFamily="@font/roboto"
                 android:text="Preview Question"
                 android:textAllCaps="false"
-                android:textColor="@color/primary_white"
+                android:textColor="@color/black"
                 android:textSize="16sp"
                 android:textStyle="bold"
-                app:cornerRadius="15dp"
-                android:layout_marginHorizontal="20dp"
-                android:layout_marginBottom="10dp"
-                android:layout_marginTop="10dp"/>
+                app:cornerRadius="15dp" />
+
         </LinearLayout>
     </LinearLayout>
     <include
