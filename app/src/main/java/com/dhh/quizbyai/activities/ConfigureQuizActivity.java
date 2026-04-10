@@ -151,7 +151,8 @@ public class ConfigureQuizActivity extends BaseActivity {
             byte[] pdfBytes = getBytesFromUri(pdfUri);
             String prompt = String.format(Locale.getDefault(),
                     "Dựa trên tài liệu PDF này, hãy tạo %d câu hỏi trắc nghiệm. " +
-                            "Trả về định dạng JSON duy nhất: [{\"question\": \"...\", \"options\": [\"...\"], \"answer\": \"...\"}]",
+                            "Đồng thời, hãy phân tích nội dung và chọn 1 Emoji duy nhất đại diện cho chủ đề của tài liệu này (ví dụ: 💻 cho CNTT, 🧬 cho Sinh học). " +
+                             "Trả về định dạng JSON duy nhất với cấu trúc sau: {\"topic_emoji\": \"...\", \"questions\": [{\"question\": \"...\", \"options\": [\"...\"], \"answer\": \"...\"}]}",
                     selectedQuestionCount);
 
             Content content = new Content.Builder()
@@ -212,9 +213,17 @@ public class ConfigureQuizActivity extends BaseActivity {
     private void saveQuizToDatabase(String jsonResult, String docName, String fileUrl) {
         try {
             String cleanJson = jsonResult.replaceAll("```json|```", "").trim();
+            // 1. Dùng JsonParser để đọc Object JSON tổng thể
+            com.google.gson.JsonObject rootObj = com.google.gson.JsonParser.parseString(cleanJson).getAsJsonObject();
+
+            // 2. Lấy Emoji ra (nếu AI quên trả về thì lấy mặc định là 📝)
+            String topicEmoji = rootObj.has("topic_emoji") ? rootObj.get("topic_emoji").getAsString() : "📝";
+
+            // 3. Lấy mảng câu hỏi và dùng Gson parse như cũ
+            com.google.gson.JsonArray questionsArray = rootObj.getAsJsonArray("questions");
             Gson gson = new Gson();
             Type listType = new TypeToken<List<QuestionModel>>(){}.getType();
-            List<QuestionModel> questions = gson.fromJson(cleanJson, listType);
+            List<QuestionModel> questions = gson.fromJson(questionsArray, listType);
 
             Map<String, Object> quizMap = new HashMap<>();
             quizMap.put("title", etxtQuizName.getText().toString().trim());
@@ -225,6 +234,7 @@ public class ConfigureQuizActivity extends BaseActivity {
             quizMap.put("createdAt", System.currentTimeMillis());
             quizMap.put("score", 0);
             quizMap.put("questionCount", questions.size());
+            quizMap.put("topic_emoji", topicEmoji);
 
             if (isGuest) {
                 saveQuizLocally(quizMap);
