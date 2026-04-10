@@ -68,9 +68,18 @@ public class MyQuizzedActivity extends BaseActivity {
         });
 
         // 4. Gọi hàm load dữ liệu mặc định ban đầu (Truyền chuỗi rỗng để hiển thị tất cả)
-        loadMyQuizzes("");
     }
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Hàm này sẽ tự động chạy mỗi khi màn hình này hiện ra trước mặt người dùng
 
+        // Lấy lại từ khóa đang gõ dở trên ô tìm kiếm (nếu có)
+        String currentKeyword = edt_name_quiz.getText().toString().trim();
+
+        // Load lại dữ liệu từ Firebase
+        loadMyQuizzes(currentKeyword);
+    }
     // 5. Cập nhật hàm load có thêm tham số searchKeyword
     private void loadMyQuizzes(String searchKeyword) {
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
