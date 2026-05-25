@@ -110,6 +110,7 @@ public class MyQuizzedActivity extends BaseActivity {
                         Long createdAt = quizSnap.child("createdAt").getValue(Long.class);
                         Integer questionCount = quizSnap.child("questionCount").getValue(Integer.class);
                         Integer score = quizSnap.child("score").getValue(Integer.class);
+                        String topicEmoji = quizSnap.child("topic_emoji").getValue(String.class);
 
                         // Xử lý dữ liệu null phòng hờ
                         if (questionCount == null) questionCount = 0;
@@ -125,7 +126,7 @@ public class MyQuizzedActivity extends BaseActivity {
                         String infoText = dateStr + " • " + questionCount + " Qs";
 
                     // Gọi hàm tạo Giao diện cho từng Quiz
-                    addQuizItemToView(quizId, title, infoText, score, createdAt);
+                        addQuizItemToView(quizId, title, infoText, score, createdAt, topicEmoji);
                 }
             }
 
@@ -142,7 +143,7 @@ public class MyQuizzedActivity extends BaseActivity {
         });
     }
 
-    private void addQuizItemToView(String quizId, String title, String info, int score, long createdAt) {
+    private void addQuizItemToView(String quizId, String title, String info, int score, long createdAt, String topicEmoji) {
         // Inflate layout item_quiz_layout.xml
         View itemView = LayoutInflater.from(this).inflate(R.layout.item_quiz_layout, quizListContainer, false);
 
@@ -150,11 +151,18 @@ public class MyQuizzedActivity extends BaseActivity {
         TextView txtTitle = itemView.findViewById(R.id.txt_quiz_title);
         TextView txtInfo = itemView.findViewById(R.id.txt_quiz_info);
         TextView txtScore = itemView.findViewById(R.id.txt_quiz_score);
+        TextView tvTopicEmoji = itemView.findViewById(R.id.tvTopicEmoji);
 
         // Gán dữ liệu
         txtTitle.setText(title);
         txtInfo.setText(info);
         txtScore.setText(score + "%");
+
+        if (topicEmoji != null && !topicEmoji.isEmpty()) {
+            tvTopicEmoji.setText(topicEmoji);
+        } else {
+            tvTopicEmoji.setText("📝"); // Mặc định nếu Firebase chưa có dữ liệu Emoji
+        }
 
         // Set sự kiện khi nhấn vào cái khung xám này
         itemView.setOnClickListener(v -> {
