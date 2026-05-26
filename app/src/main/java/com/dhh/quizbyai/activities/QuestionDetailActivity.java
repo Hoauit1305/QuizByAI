@@ -475,9 +475,10 @@ public class QuestionDetailActivity extends BaseActivity {
         Button btnStartGame = sheetView.findViewById(R.id.btn_start_multiplayer);
         btnStartGame.setVisibility(View.GONE);
 
-        txtTitle.setText("Live Leaderboard (PIN: " + roomPin + ")");
+        txtTitle.setText(roomPin);
         btnEndGame.setText("End Game & Close Room");
-        btnEndGame.setBackgroundTintList(android.content.res.ColorStateList.valueOf(android.graphics.Color.RED));
+        btnEndGame.setBackgroundTintList(android.content.res.ColorStateList.valueOf(androidx.core.content.ContextCompat.getColor(this, R.color.primary_orange)));
+        btnEndGame.setTextColor(androidx.core.content.ContextCompat.getColor(this, R.color.black));
 
         // Cài đặt RecyclerView cho Bảng xếp hạng
         List<PlayerModel> livePlayerList = new ArrayList<>();
