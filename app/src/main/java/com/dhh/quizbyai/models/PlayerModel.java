@@ -9,9 +9,10 @@ public class PlayerModel {
     public PlayerModel() {
     }
 
-    public PlayerModel(String name, int score) {
+    public PlayerModel(String name, int score, int answered) {
         this.name = name;
         this.score = score;
+        this.answered = answered;
     }
 
     public String getName() {
