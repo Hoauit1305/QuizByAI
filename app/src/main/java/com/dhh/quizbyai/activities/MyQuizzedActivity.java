@@ -214,7 +214,7 @@ public class MyQuizzedActivity extends BaseActivity {
                             String name = currentUser.getDisplayName();
                             if (name == null || name.isEmpty()) name = "Player";
 
-                            PlayerModel me = new PlayerModel(name, 0);
+                            PlayerModel me = new PlayerModel(name, 0, 0);
 
                             roomRef.child("players").child(uid).setValue(me)
                                     .addOnSuccessListener(aVoid -> {

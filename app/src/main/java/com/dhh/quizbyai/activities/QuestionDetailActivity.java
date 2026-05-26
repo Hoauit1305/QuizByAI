@@ -24,6 +24,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.dhh.quizbyai.R;
+import com.dhh.quizbyai.adapter.LiveLeaderboardAdapter;
 import com.dhh.quizbyai.models.PlayerModel;
 import com.dhh.quizbyai.models.QuestionModel;
 import com.dhh.quizbyai.models.QuizModel;
@@ -40,6 +41,7 @@ import com.google.gson.Gson;
 import java.lang.reflect.Type;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -57,6 +59,7 @@ public class QuestionDetailActivity extends BaseActivity {
     Button btn_preview;
     ImageButton btn_delete_quiz;
     LinearLayout quiz_history_list_container;
+    private int currentTotalQuestions = 0; // Để hứng tổng số câu hỏi
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -118,7 +121,7 @@ public class QuestionDetailActivity extends BaseActivity {
                         txt_NoQ.setText(String.valueOf(quiz.getQuestionCount()));
                         txt_time_perQ.setText(quiz.getTimePerQuestion() + "s");
                         txt_total_time.setText(quiz.getTotalTime());
-
+                        currentTotalQuestions = quiz.getQuestionCount();
                         // 3. Phân quyền: Kiểm tra xem user hiện tại có phải là người tạo Quiz không
                         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
 
@@ -422,7 +425,7 @@ public class QuestionDetailActivity extends BaseActivity {
             bottomSheetDialog.dismiss();
 
             // Host cũng có thể nhảy vào màn hình theo dõi tiến độ (sẽ làm ở bước sau)
-            Toast.makeText(this, "Game Started!", Toast.LENGTH_SHORT).show();
+            showHostLiveDashboard(roomPin, roomRef);
         });
 
         // Xử lý nút ĐÓNG PHÒNG
@@ -433,5 +436,73 @@ public class QuestionDetailActivity extends BaseActivity {
         });
 
         bottomSheetDialog.show();
+    }
+
+    private void showHostLiveDashboard(String roomPin, DatabaseReference roomRef) {
+        BottomSheetDialog dashboardDialog = new BottomSheetDialog(this);
+        // Bạn có thể tái sử dụng file layout của phòng chờ (layout_bottom_sheet_waiting_room),
+        // chỉ cần ẩn/hiện vài nút là thành dashboard.
+        View sheetView = getLayoutInflater().inflate(R.layout.layout_bottom_sheet_waiting_room, null);
+        dashboardDialog.setContentView(sheetView);
+
+        dashboardDialog.setCancelable(false);
+        dashboardDialog.setCanceledOnTouchOutside(false);
+
+        TextView txtTitle = sheetView.findViewById(R.id.txt_room_pin); // Tái sử dụng làm Title
+        TextView txtStatus = sheetView.findViewById(R.id.txt_player_count);
+        RecyclerView rvLeaderboard = sheetView.findViewById(R.id.rv_players);
+        Button btnEndGame = sheetView.findViewById(R.id.btn_close_room);
+
+        // Ẩn nút Start Game vì game đã chạy rồi
+        Button btnStartGame = sheetView.findViewById(R.id.btn_start_multiplayer);
+        btnStartGame.setVisibility(View.GONE);
+
+        txtTitle.setText("Live Leaderboard (PIN: " + roomPin + ")");
+        btnEndGame.setText("End Game & Close Room");
+        btnEndGame.setBackgroundTintList(android.content.res.ColorStateList.valueOf(android.graphics.Color.RED));
+
+        // Cài đặt RecyclerView cho Bảng xếp hạng
+        List<PlayerModel> livePlayerList = new ArrayList<>();
+        LiveLeaderboardAdapter adapter = new LiveLeaderboardAdapter(livePlayerList, currentTotalQuestions);
+        rvLeaderboard.setLayoutManager(new LinearLayoutManager(this));
+        rvLeaderboard.setAdapter(adapter);
+
+        // BẮT ĐẦU LẮNG NGHE ĐIỂM SỐ REALTIME TỪ FIREBASE
+        roomRef.child("players").addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                livePlayerList.clear();
+                int finishedPlayers = 0;
+
+                for (DataSnapshot playerSnap : snapshot.getChildren()) {
+                    PlayerModel player = playerSnap.getValue(PlayerModel.class);
+                    if (player != null) {
+                        livePlayerList.add(player);
+                        // Đếm xem có bao nhiêu người đã làm xong
+                        if (player.getAnswered() >= currentTotalQuestions) {
+                            finishedPlayers++;
+                        }
+                    }
+                }
+
+                // ĐÂY LÀ ĐOẠN QUYẾT ĐỊNH: Sắp xếp người chơi từ điểm cao xuống điểm thấp
+                Collections.sort(livePlayerList, (p1, p2) -> Integer.compare(p2.getScore(), p1.getScore()));
+
+                adapter.notifyDataSetChanged();
+                txtStatus.setText("Status: " + finishedPlayers + "/" + livePlayerList.size() + " completed");
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {}
+        });
+
+        // Nút kết thúc game sớm (Hoặc khi mọi người làm xong hết Host tự bấm)
+        btnEndGame.setOnClickListener(v -> {
+            roomRef.removeValue(); // Xóa phòng trên Firebase, các máy con sẽ tự văng ra
+            dashboardDialog.dismiss();
+            Toast.makeText(this, "Trận đấu đã kết thúc!", Toast.LENGTH_SHORT).show();
+        });
+
+        dashboardDialog.show();
     }
 }
