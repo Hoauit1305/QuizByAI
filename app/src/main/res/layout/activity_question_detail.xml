@@ -23,7 +23,8 @@
             android:layout_marginHorizontal="24dp"
             android:layout_marginTop="24dp"
             android:background="@drawable/bg_rounded_card"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:paddingBottom="20dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -246,11 +247,12 @@
                 android:layout_marginBottom="5dp"
                 android:backgroundTint="@color/primary_white"
                 android:fontFamily="@font/roboto"
-                android:text="Preview Question"
+                android:text="Preview / Edit Question"
                 android:textAllCaps="false"
                 android:textColor="@color/black"
                 android:textSize="16sp"
                 android:textStyle="bold"
+                android:visibility="gone"
                 app:cornerRadius="15dp" />
 
         </LinearLayout>
