@@ -25,6 +25,17 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
+import androidx.annotation.NonNull;
+import android.view.View;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+
 public class UploadActivity extends BaseActivity {
     // Khai báo launcher để xử lý kết quả sau khi chọn file
     private ActivityResultLauncher<Intent> filePickerLauncher;
@@ -61,7 +72,12 @@ public class UploadActivity extends BaseActivity {
 
         logout();
     }
-
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Gọi lại hàm này mỗi khi giao diện hiển thị lên màn hình
+        loadRecentQuiz();
+    }
     private void setupFilePicker() {
         filePickerLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
@@ -166,5 +182,95 @@ public class UploadActivity extends BaseActivity {
                 });
             }
         });
+    }
+    private void loadRecentQuiz() {
+        View recentQuizView = findViewById(R.id.included_recent_quiz);
+        TextView txtQuickAccessTitle = findViewById(R.id.textView5); // Chữ "Quick Access"
+
+        // Nếu là Guest thì không có dữ liệu Firebase để hiển thị bài gần nhất, ẩn khu vực này đi
+        if (isGuest) {
+            recentQuizView.setVisibility(View.GONE);
+            txtQuickAccessTitle.setVisibility(View.GONE);
+            return;
+        }
+
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser == null) return;
+
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("Quizzes");
+
+        // Lấy tất cả quiz của user này giống như bên MyQuizzedActivity
+        ref.orderByChild("creatorId").equalTo(currentUser.getUid())
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        if (!snapshot.exists()) {
+                            // Ẩn khu vực nếu người dùng chưa có bài quiz nào
+                            recentQuizView.setVisibility(View.GONE);
+                            txtQuickAccessTitle.setVisibility(View.GONE);
+                            return;
+                        }
+
+                        DataSnapshot latestQuizSnap = null;
+                        long maxTimestamp = 0;
+
+                        // Lọc ra bài quiz có thời gian tạo gần nhất
+                        for (DataSnapshot quizSnap : snapshot.getChildren()) {
+                            Long createdAt = quizSnap.child("createdAt").getValue(Long.class);
+                            if (createdAt != null && createdAt > maxTimestamp) {
+                                maxTimestamp = createdAt;
+                                latestQuizSnap = quizSnap;
+                            }
+                        }
+
+                        if (latestQuizSnap != null) {
+                            // Hiển thị lại UI nếu tìm thấy
+                            recentQuizView.setVisibility(View.VISIBLE);
+                            txtQuickAccessTitle.setVisibility(View.VISIBLE);
+
+                            // Lấy dữ liệu
+                            String quizId = latestQuizSnap.getKey();
+                            String title = latestQuizSnap.child("title").getValue(String.class);
+                            Integer questionCount = latestQuizSnap.child("questionCount").getValue(Integer.class);
+                            Integer score = latestQuizSnap.child("score").getValue(Integer.class);
+
+                            if (title == null) title = "Untitled Quiz";
+                            if (questionCount == null) questionCount = 0;
+                            if (score == null) score = 0;
+
+                            String dateStr = "Unknown Date";
+                            if (maxTimestamp > 0) {
+                                SimpleDateFormat sdf = new SimpleDateFormat("MMM d, yyyy", Locale.US);
+                                dateStr = sdf.format(new Date(maxTimestamp));
+                            }
+                            String infoText = dateStr + " • " + questionCount + " Qs";
+
+                            // Ánh xạ các thành phần con nằm bên trong item_quiz_layout.xml
+                            TextView txtTitle = findViewById(R.id.txt_quiz_title);
+                            TextView txtInfo = findViewById(R.id.txt_quiz_info);
+                            TextView txtScore = findViewById(R.id.txt_quiz_score);
+
+                            // Đổ dữ liệu
+                            txtTitle.setText(title);
+                            txtInfo.setText(infoText);
+                            txtScore.setText(score + "%");
+
+                            // Bắt sự kiện Click vào thẻ để chuyển sang màn hình Chi tiết giống MyQuizzedActivity
+                            long finalMaxTimestamp = maxTimestamp;
+                            recentQuizView.setOnClickListener(v -> {
+                                Intent intent = new Intent(UploadActivity.this, QuestionDetailActivity.class);
+                                intent.putExtra("QUIZ_ID", quizId);
+                                intent.putExtra("CREATED_AT", finalMaxTimestamp);
+                                startActivity(intent);
+                            });
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        // Xử lý lỗi nếu có
+                        Log.e("UploadActivity", "Lỗi tải Recent Quiz: " + error.getMessage());
+                    }
+                });
     }
 }
