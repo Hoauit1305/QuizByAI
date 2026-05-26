@@ -273,7 +273,7 @@ public class QuestionDetailActivity extends BaseActivity {
                             if (quiz.containsKey("history")) {
                                 // Lấy mảng history ra và vẽ lên giao diện
                                 List<Map<String, Object>> historyList = (List<Map<String, Object>>) quiz.get("history");
-                                renderHistoryToView(historyList);
+                                renderHistoryToView(historyList, quizId);
                             }
                             break;
                         }
@@ -295,15 +295,24 @@ public class QuestionDetailActivity extends BaseActivity {
                         Long timestamp = snap.child("timestamp").getValue(Long.class);
                         Integer score = snap.child("score").getValue(Integer.class);
 
+                        // Lấy thêm mảng userAnswers
+                        List<String> userAnswers = new ArrayList<>();
+                        if(snap.hasChild("userAnswers")){
+                            for(DataSnapshot ansSnap : snap.child("userAnswers").getChildren()){
+                                userAnswers.add(ansSnap.getValue(String.class));
+                            }
+                        }
+
                         if (timestamp != null && score != null) {
                             Map<String, Object> attempt = new HashMap<>();
                             attempt.put("timestamp", timestamp);
                             attempt.put("score", score);
+                            attempt.put("userAnswers", userAnswers); // Truyền mảng này vào
                             historyList.add(attempt);
                         }
                     }
-                    // Vẽ lên giao diện
-                    renderHistoryToView(historyList);
+                    // THÊM BIẾN quizId VÀO HÀM RENDER ĐỂ TRUYỀN ĐI
+                    renderHistoryToView(historyList, quizId);
                 }
 
                 @Override
@@ -314,33 +323,42 @@ public class QuestionDetailActivity extends BaseActivity {
         }
     }
     // HÀM DÙNG CHUNG ĐỂ VẼ GIAO DIỆN
-    private void renderHistoryToView(List<Map<String, Object>> historyList) {
-        // Xóa sạch các view cũ trước khi vẽ để không bị trùng lặp
+    // Thêm tham số String quizId
+    private void renderHistoryToView(List<Map<String, Object>> historyList, String quizId) {
         quiz_history_list_container.removeAllViews();
+        if (historyList == null || historyList.isEmpty()) return;
 
-        if (historyList == null || historyList.isEmpty()) {
-            return; // Chưa làm lần nào thì không hiện gì cả
-        }
-
-        // Định dạng ngày giờ: Ví dụ "May 2, 2026 - 14:30"
         SimpleDateFormat sdf = new SimpleDateFormat("MMM d, yyyy - HH:mm", Locale.US);
 
-        // Lặp qua từng lần làm bài (Attempt)
         for (Map<String, Object> attempt : historyList) {
             long timestamp = ((Number) attempt.get("timestamp")).longValue();
             int score = ((Number) attempt.get("score")).intValue();
 
-            // Nạp cái file XML item_history_layout vào bộ nhớ
             View historyView = getLayoutInflater().inflate(R.layout.item_quiz_history_layout, quiz_history_list_container, false);
+
+            // Xử lý hiệu ứng click như 1 button
+            historyView.setClickable(true);
+            historyView.setFocusable(true);
 
             TextView txtDate = historyView.findViewById(R.id.txt_history_date);
             TextView txtScore = historyView.findViewById(R.id.txt_history_score);
 
-            // Gắn dữ liệu
             txtDate.setText(sdf.format(new Date(timestamp)));
             txtScore.setText(score + "%");
 
-            // Thêm cục view này vào danh sách dọc trên màn hình
+            // SỰ KIỆN CLICK CHUYỂN SANG MÀN HÌNH REVIEW
+            historyView.setOnClickListener(v -> {
+                Intent intent = new Intent(QuestionDetailActivity.this, ReviewQuizActivity.class);
+                intent.putExtra("QUIZ_ID", quizId); // Để load lại list câu hỏi
+
+                // Gửi mảng đáp án user đã chọn sang màn hình bên kia
+                List<String> userAnswers = (List<String>) attempt.get("userAnswers");
+                if(userAnswers != null){
+                    intent.putStringArrayListExtra("USER_ANSWERS", new ArrayList<>(userAnswers));
+                }
+                startActivity(intent);
+            });
+
             quiz_history_list_container.addView(historyView);
         }
     }
