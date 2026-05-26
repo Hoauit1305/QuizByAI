@@ -16,14 +16,20 @@ import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SwitchCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.dhh.quizbyai.R;
+import com.dhh.quizbyai.models.PlayerModel;
 import com.dhh.quizbyai.models.QuestionModel;
 import com.dhh.quizbyai.models.QuizModel;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.common.reflect.TypeToken;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -40,6 +46,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Random;
 
 public class QuestionDetailActivity extends BaseActivity {
     ImageView img_avt_quiz;
@@ -112,12 +119,21 @@ public class QuestionDetailActivity extends BaseActivity {
             }
         });
     }
-    protected void startQuiz(String quizID){
+    protected void startQuiz(String quizID) {
+        // Ánh xạ cái công tắc "Create a quiz for multiple players"
+        SwitchCompat switchMultiplayer = findViewById(R.id.customSwitch);
+
         btn_start_quiz.setOnClickListener(v -> {
-            Intent intent = new Intent(QuestionDetailActivity.this, QuestionActivity.class);
-            intent.putExtra("QUIZ_ID", quizID);
-            startActivity(intent);
-            finish();
+            if (switchMultiplayer.isChecked()) {
+                // NẾU BẬT CÔNG TẮC -> CHẾ ĐỘ NHIỀU NGƯỜI CHƠI
+                createMultiplayerRoom(quizID);
+            } else {
+                // NẾU TẮT CÔNG TẮC -> CHƠI SOLO NHƯ CŨ
+                Intent intent = new Intent(QuestionDetailActivity.this, QuestionActivity.class);
+                intent.putExtra("QUIZ_ID", quizID);
+                startActivity(intent);
+                finish();
+            }
         });
     }
     protected void deleteQuizFromFireBase(String quizId){
@@ -300,5 +316,98 @@ public class QuestionDetailActivity extends BaseActivity {
             // Thêm cục view này vào danh sách dọc trên màn hình
             quiz_history_list_container.addView(historyView);
         }
+    }
+    // Hàm 1: Random mã 6 số và đẩy lên Firebase
+    private void createMultiplayerRoom(String quizID) {
+        // Tạo ngẫu nhiên 6 số
+        Random rnd = new Random();
+        int number = rnd.nextInt(999999);
+        String roomPin = String.format("%06d", number);
+
+        // Khởi tạo phòng trên Firebase ở nhánh "Rooms"
+        DatabaseReference roomRef = FirebaseDatabase.getInstance().getReference("Rooms").child(roomPin);
+
+        Map<String, Object> roomData = new HashMap<>();
+        roomData.put("quizId", quizID);
+        roomData.put("hostId", FirebaseAuth.getInstance().getCurrentUser().getUid());
+        roomData.put("status", "waiting"); // Trạng thái đang chờ
+
+        roomRef.setValue(roomData).addOnSuccessListener(aVoid -> {
+            // Khởi tạo thành công thì mở Panel lên
+            showWaitingRoomPanel(roomPin, roomRef);
+        }).addOnFailureListener(e -> {
+            Toast.makeText(this, "Không thể tạo phòng: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        });
+    }
+
+    // Hàm 2: Hiển thị Panel và Lắng nghe người chơi vào phòng
+    private void showWaitingRoomPanel(String roomPin, DatabaseReference roomRef) {
+        BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(this);
+        View sheetView = getLayoutInflater().inflate(R.layout.layout_bottom_sheet_waiting_room, null);
+        bottomSheetDialog.setContentView(sheetView);
+
+        // Không cho chạm ra ngoài để tắt, bắt buộc dùng nút Close
+        bottomSheetDialog.setCancelable(false);
+        bottomSheetDialog.setCanceledOnTouchOutside(false);
+
+        // Ánh xạ View trong Panel
+        TextView txtRoomPin = sheetView.findViewById(R.id.txt_room_pin);
+        TextView txtPlayerCount = sheetView.findViewById(R.id.txt_player_count);
+        RecyclerView rvPlayers = sheetView.findViewById(R.id.rv_players);
+        Button btnStartGame = sheetView.findViewById(R.id.btn_start_multiplayer);
+        Button btnCloseRoom = sheetView.findViewById(R.id.btn_close_room);
+
+        txtRoomPin.setText(roomPin);
+
+        // Setup RecyclerView
+        List<PlayerModel> playerList = new ArrayList<>();
+        com.dhh.quizbyai.adapters.WaitingRoomAdapter adapter = new com.dhh.quizbyai.adapters.WaitingRoomAdapter(playerList);
+        rvPlayers.setLayoutManager(new LinearLayoutManager(this));
+        rvPlayers.setAdapter(adapter);
+
+        // GẮN TAI NGHE: Lắng nghe danh sách người chơi theo thời gian thực
+        ValueEventListener playerListener = new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                playerList.clear();
+                for (DataSnapshot playerSnap : snapshot.getChildren()) {
+                    PlayerModel player = playerSnap.getValue(PlayerModel.class);
+                    if (player != null) {
+                        playerList.add(player);
+                    }
+                }
+                adapter.notifyDataSetChanged(); // Cập nhật danh sách
+                txtPlayerCount.setText("Players (" + playerList.size() + ")"); // Cập nhật số lượng
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {}
+        };
+
+        // Chỉ lắng nghe ở nhánh "players" của phòng này
+        roomRef.child("players").addValueEventListener(playerListener);
+
+        // Xử lý nút START GAME
+        btnStartGame.setOnClickListener(v -> {
+            if (playerList.isEmpty()) {
+                Toast.makeText(this, "Cần ít nhất 1 người chơi để bắt đầu!", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            // Đổi trạng thái phòng thành "playing", các máy con sẽ tự động nhảy vào thi
+            roomRef.child("status").setValue("playing");
+            bottomSheetDialog.dismiss();
+
+            // Host cũng có thể nhảy vào màn hình theo dõi tiến độ (sẽ làm ở bước sau)
+            Toast.makeText(this, "Game Started!", Toast.LENGTH_SHORT).show();
+        });
+
+        // Xử lý nút ĐÓNG PHÒNG
+        btnCloseRoom.setOnClickListener(v -> {
+            roomRef.removeValue(); // Xóa sạch phòng trên Firebase
+            bottomSheetDialog.dismiss();
+            Toast.makeText(this, "Đã đóng phòng", Toast.LENGTH_SHORT).show();
+        });
+
+        bottomSheetDialog.show();
     }
 }

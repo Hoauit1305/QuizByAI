@@ -18,15 +18,33 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toTopOf="@+id/includedBottomNav">
 
-        <TextView
-            android:id="@+id/textView18"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/my_quizzes"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            android:textColor="@color/primary_white"/>
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
 
+            <TextView
+                android:id="@+id/textView18"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/my_quizzes"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:textColor="@color/primary_white"/>
+
+            <Button
+                android:id="@+id/btn_join_quiz_top"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:backgroundTint="@color/primary_orange"
+                android:text="Join Quiz"
+                android:textColor="@color/black"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:paddingHorizontal="16dp" />
+        </LinearLayout>
         <TextView
             android:id="@+id/textView19"
             android:layout_width="match_parent"

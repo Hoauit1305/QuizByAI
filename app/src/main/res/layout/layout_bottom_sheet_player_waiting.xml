@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="#1E1E1E"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:gravity="center_horizontal">
+
+    <View
+        android:layout_width="40dp"
+        android:layout_height="4dp"
+        android:layout_marginBottom="20dp"
+        android:background="#555555" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Joined Successfully!"
+        android:textColor="@color/primary_white"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="10dp"/>
+
+    <TextView
+        android:id="@+id/txt_joined_pin"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Room PIN: 000000"
+        android:textColor="@color/primary_orange"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="20dp"/>
+
+    <ProgressBar
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginBottom="20dp"
+        android:indeterminateTint="@color/primary_orange"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Waiting for the host to start the game..."
+        android:textColor="@color/secondary_white"
+        android:textSize="16sp"
+        android:layout_marginBottom="30dp"
+        android:textAlignment="center"/>
+
+    <Button
+        android:id="@+id/btn_leave_room"
+        android:layout_width="match_parent"
+        android:layout_height="55dp"
+        android:backgroundTint="#333333"
+        android:text="Leave Room"
+        android:textColor="@color/primary_white"
+        android:textSize="16sp"
+        android:textStyle="bold" />
+
+</LinearLayout>
