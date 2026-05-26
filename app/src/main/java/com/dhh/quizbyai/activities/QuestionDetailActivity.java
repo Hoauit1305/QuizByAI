@@ -40,11 +40,14 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 public class QuestionDetailActivity extends BaseActivity {
     ImageView img_avt_quiz;
     TextView txt_name_quiz, txt_quiz_day, txt_NoQ, txt_total_time, txt_time_perQ;
     Button btn_start_quiz;
+    Button btn_preview;
     ImageButton btn_delete_quiz;
     LinearLayout quiz_history_list_container;
     @Override
@@ -70,6 +73,12 @@ public class QuestionDetailActivity extends BaseActivity {
         deleteQuiz(quiz_ID, created_at);
 
         loadHistoryUI(quiz_ID, created_at);
+        btn_preview = findViewById(R.id.btn_preview);
+        btn_preview.setOnClickListener(v -> {
+            Intent intent = new Intent(QuestionDetailActivity.this, PreviewEditActivity.class);
+            intent.putExtra("QUIZ_ID", quiz_ID);
+            startActivity(intent);
+        });
     }
     protected void initViews(){
         img_avt_quiz = findViewById(R.id.img_avt_quiz);
@@ -102,6 +111,21 @@ public class QuestionDetailActivity extends BaseActivity {
                         txt_NoQ.setText(String.valueOf(quiz.getQuestionCount()));
                         txt_time_perQ.setText(quiz.getTimePerQuestion() + "s");
                         txt_total_time.setText(quiz.getTotalTime());
+
+                        // 3. Phân quyền: Kiểm tra xem user hiện tại có phải là người tạo Quiz không
+                        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+
+                        // Lấy creatorId từ snapshot (Do lúc tạo bài Quiz mình đã lưu "creatorId")
+                        String creatorId = snapshot.child("creatorId").getValue(String.class);
+
+                        // So sánh UID của user đang đăng nhập và creatorId của bài Quiz
+                        if (currentUser != null && creatorId != null && creatorId.equals(currentUser.getUid())) {
+                            // Nếu đúng là chủ sở hữu -> Hiện nút Preview / Edit
+                            btn_preview.setVisibility(View.VISIBLE);
+                        } else {
+                            // Nếu là người lạ (hoặc Guest) -> Giữ nguyên trạng thái ẩn
+                            btn_preview.setVisibility(View.GONE);
+                        }
                     }
                 }
             }
