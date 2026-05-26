@@ -9,10 +9,14 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
         android:orientation="vertical"
         android:padding="24dp"
-        android:background="@color/black">
+        android:background="@color/black"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/includedBottomNav">
 
         <TextView
             android:id="@+id/textView18"
@@ -63,6 +67,7 @@
                 android:background="@android:color/transparent"
                 app:srcCompat="@drawable/ic_find" />
         </LinearLayout>
+
         <ScrollView
             android:layout_width="match_parent"
             android:layout_height="0dp"
