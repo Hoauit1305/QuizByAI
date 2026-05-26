@@ -4,7 +4,9 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -13,6 +15,7 @@ import android.widget.Toast;
 import androidx.activity.EdgeToEdge;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -22,16 +25,16 @@ import com.dhh.quizbyai.R;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-
-import androidx.annotation.NonNull;
-import android.view.View;
+import com.google.firebase.auth.UserProfileChangeRequest;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -44,7 +47,7 @@ public class UploadActivity extends BaseActivity {
     TextView txt_name, txt_gmail;
     ImageButton btn_logout;
     FirebaseAuth mAuth;
-    boolean isGuest;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -58,6 +61,18 @@ public class UploadActivity extends BaseActivity {
             return insets;
         });
 
+        mAuth = FirebaseAuth.getInstance();
+
+        // KIỂM TRA PROFILE TÀI KHOẢN KHI VỪA VÀO
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        if (currentUser != null) {
+            String currentName = currentUser.getDisplayName();
+            // Nếu tài khoản chưa có tên (thường là do vừa tạo bằng Email/Password)
+            if (currentName == null || currentName.isEmpty()) {
+                showSetupProfileBottomSheet(currentUser);
+            }
+        }
+
         // 1. Kích hoạt Bottom Navigation từ BaseActivity
         setupBottomNavigation();
 
@@ -69,15 +84,110 @@ public class UploadActivity extends BaseActivity {
         btnChooseFile.setOnClickListener(v -> openFilePicker());
 
         displayInfo();
-
         logout();
     }
+
     @Override
     protected void onResume() {
         super.onResume();
-        // Gọi lại hàm này mỗi khi giao diện hiển thị lên màn hình
         loadRecentQuiz();
     }
+
+    // ==========================================
+    // LOGIC CẬP NHẬT THÔNG TIN TÀI KHOẢN (ONBOARDING)
+    // ==========================================
+    private void showSetupProfileBottomSheet(FirebaseUser user) {
+        BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(this);
+        View sheetView = getLayoutInflater().inflate(R.layout.layout_bottom_sheet_setup_profile, null);
+        bottomSheetDialog.setContentView(sheetView);
+
+        // Bắt buộc người dùng phải điền, không cho tắt panel ngang xương
+        bottomSheetDialog.setCancelable(false);
+        bottomSheetDialog.setCanceledOnTouchOutside(false);
+
+        EditText edtName = sheetView.findViewById(R.id.edt_setup_name);
+        Button btnSave = sheetView.findViewById(R.id.btn_setup_save);
+
+        ImageButton avatar1 = sheetView.findViewById(R.id.avatar_option_1);
+        ImageButton avatar2 = sheetView.findViewById(R.id.avatar_option_2);
+        ImageButton avatar3 = sheetView.findViewById(R.id.avatar_option_3);
+        ImageButton avatar4 = sheetView.findViewById(R.id.avatar_option_4);
+
+        // Mảng lưu trữ lựa chọn (Khởi tạo rỗng, không gán mặc định nữa)
+        final String[] selectedAvatarUri = {""};
+
+        // Xử lý sự kiện click chọn Avatar
+        avatar1.setOnClickListener(v -> {
+            selectedAvatarUri[0] = "android.resource://" + getPackageName() + "/" + R.drawable.icon_avata_1;
+            highlightSelectedAvatar(avatar1, avatar1, avatar2, avatar3, avatar4);
+        });
+        avatar2.setOnClickListener(v -> {
+            selectedAvatarUri[0] = "android.resource://" + getPackageName() + "/" + R.drawable.icon_avata_2;
+            highlightSelectedAvatar(avatar2, avatar1, avatar2, avatar3, avatar4);
+        });
+        avatar3.setOnClickListener(v -> {
+            selectedAvatarUri[0] = "android.resource://" + getPackageName() + "/" + R.drawable.icon_avata_3;
+            highlightSelectedAvatar(avatar3, avatar1, avatar2, avatar3, avatar4);
+        });
+        avatar4.setOnClickListener(v -> {
+            selectedAvatarUri[0] = "android.resource://" + getPackageName() + "/" + R.drawable.icon_avata_4;
+            highlightSelectedAvatar(avatar4, avatar1, avatar2, avatar3, avatar4);
+        });
+
+        // Nút Lưu thông tin
+        btnSave.setOnClickListener(v -> {
+            String inputName = edtName.getText().toString().trim();
+
+            if (inputName.isEmpty()) {
+                Toast.makeText(this, "Please enter your display name", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // Bắt lỗi nếu người dùng chưa chọn icon nào
+            if (selectedAvatarUri[0].isEmpty()) {
+                Toast.makeText(this, "Please choose an avatar", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // Tạo gói cập nhật
+            UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
+                    .setDisplayName(inputName)
+                    .setPhotoUri(Uri.parse(selectedAvatarUri[0]))
+                    .build();
+
+            btnSave.setEnabled(false); // Khóa nút chống spam
+            btnSave.setText("Saving...");
+
+            // Bắn lên Firebase
+            user.updateProfile(profileUpdates).addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    Toast.makeText(this, "Profile updated successfully!", Toast.LENGTH_SHORT).show();
+                    bottomSheetDialog.dismiss();
+                    displayInfo(); // Cập nhật lại giao diện ngay lập tức
+                } else {
+                    btnSave.setEnabled(true);
+                    btnSave.setText("Save & Continue");
+                    Toast.makeText(this, "Error: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                }
+            });
+        });
+
+        bottomSheetDialog.show();
+    }
+
+    // Hàm phụ trợ để làm nổi bật cái Avatar đang được chọn (Ví dụ: Thêm viền cam)
+    private void highlightSelectedAvatar(ImageButton selected, ImageButton a1, ImageButton a2, ImageButton a3, ImageButton a4) {
+        // Reset tất cả về trạng thái mờ (alpha = 0.5f)
+        a1.setAlpha(0.5f);
+        a2.setAlpha(0.5f);
+        a3.setAlpha(0.5f);
+        a4.setAlpha(0.5f);
+        // Làm sáng rõ cái đang được chọn
+        selected.setAlpha(1.0f);
+    }
+    // ==========================================
+
+
     private void setupFilePicker() {
         filePickerLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
@@ -85,14 +195,11 @@ public class UploadActivity extends BaseActivity {
                     if (result.getResultCode() == RESULT_OK && result.getData() != null) {
                         Uri fileUri = result.getData().getData();
                         if (fileUri != null) {
-                            // Hiển thị thông báo upload thành công
-                            Toast.makeText(this, "Upload thành công! Đang chuyển đến cấu hình...", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(this, "Upload successful! Redirecting to configuration...", Toast.LENGTH_SHORT).show();
 
-                            // Chuyển sang giao diện ConfigureQuizActivity
                             Intent intent = new Intent(UploadActivity.this, ConfigureQuizActivity.class);
-
                             intent.putExtra("FILE_URI", fileUri.toString());
-                            Log.d("UPLOAD", "FILE_URI được đóng gói là: " + fileUri.toString());
+                            Log.d("UPLOAD", "FILE_URI passed: " + fileUri.toString());
 
                             startActivity(intent);
                         }
@@ -103,9 +210,7 @@ public class UploadActivity extends BaseActivity {
 
     private void openFilePicker() {
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-        intent.setType("*/*"); // Cho phép quét qua các loại file
-
-        // Lọc định dạng PDF và Word (.doc, .docx)
+        intent.setType("*/*");
         String[] mimeTypes = {
                 "application/pdf",
                 "application/msword", // .doc
@@ -117,95 +222,69 @@ public class UploadActivity extends BaseActivity {
         filePickerLauncher.launch(intent);
     }
 
-    private void displayInfo(){
+    private void displayInfo() {
         img_avatar = findViewById(R.id.img_avatar);
         txt_name = findViewById(R.id.txt_Name);
         txt_gmail = findViewById(R.id.txt_gmail);
 
-//        isGuest = getIntent().getBooleanExtra("IS_GUEST", false);
-        isGuest = getSharedPreferences("AppPrefs", MODE_PRIVATE)
-                .getBoolean("IS_GUEST", false);
+        FirebaseUser currentUser = mAuth.getCurrentUser();
 
-        if(isGuest){
-            txt_name.setText(R.string.txt_name_guest);
-            txt_gmail.setText(R.string.txt_gmail_guest);
+        if (currentUser != null) {
+            String name = currentUser.getDisplayName();
+            txt_name.setText(name != null && !name.isEmpty() ? name : "New User");
 
-            img_avatar.setImageResource(R.drawable.account_circle_24px);
-        } else {
-            mAuth = FirebaseAuth.getInstance();
-            FirebaseUser currentUser = mAuth.getCurrentUser();
+            txt_gmail.setText(currentUser.getEmail());
 
-            if (currentUser != null) {
-                txt_name.setText(currentUser.getDisplayName());
-                txt_gmail.setText(currentUser.getEmail());
-
-                if (currentUser.getPhotoUrl() != null) {
-                    Glide.with(this)
-                            .load(currentUser.getPhotoUrl())
-                            .circleCrop()
-                            .into(img_avatar);
-                }
+            // Hiển thị Avatar bằng Glide
+            if (currentUser.getPhotoUrl() != null) {
+                Glide.with(this)
+                        .load(currentUser.getPhotoUrl())
+                        .circleCrop()
+                        .into(img_avatar);
+            } else {
+                img_avatar.setImageResource(R.drawable.account_circle_24px); // Hình mặc định
             }
         }
     }
-    private void logout(){
+
+    private void logout() {
         btn_logout = findViewById(R.id.btn_logout);
 
         btn_logout.setOnClickListener(v -> {
-            Intent intent = new Intent(UploadActivity.this, LoginActivity.class);
+            // 1. Đăng xuất khỏi Firebase
+            mAuth.signOut();
 
-            if(isGuest){
-                getSharedPreferences("AppPrefs", MODE_PRIVATE)
-                        .edit()
-                        .putBoolean("IS_GUEST", false)
-                        .apply();
+            // 2. Đăng xuất khỏi Google
+            String webClientId = getString(R.string.default_web_client_id);
+            GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                    .requestIdToken(webClientId)
+                    .requestEmail()
+                    .build();
+
+            GoogleSignInClient googleSignInClient = GoogleSignIn.getClient(this, gso);
+            googleSignInClient.signOut().addOnCompleteListener(this, task -> {
+                Intent intent = new Intent(UploadActivity.this, LoginActivity.class);
                 intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                 startActivity(intent);
                 finish();
-            } else {
-                // 1. Đăng xuất khỏi Firebase
-                FirebaseAuth.getInstance().signOut();
-
-                // 2. Lấy lại đúng cấu hình đăng nhập ban đầu
-                String webClientId = getString(R.string.default_web_client_id);
-                GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                        .requestIdToken(webClientId)
-                        .requestEmail()
-                        .build();
-
-                // 3. Tiến hành đăng xuất khỏi Google
-                GoogleSignInClient googleSignInClient = GoogleSignIn.getClient(this, gso);
-                googleSignInClient.signOut().addOnCompleteListener(this, task -> {
-                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                    startActivity(intent);
-                    finish();
-                });
-            }
+            });
         });
     }
+
     private void loadRecentQuiz() {
         View recentQuizView = findViewById(R.id.included_recent_quiz);
-        TextView txtQuickAccessTitle = findViewById(R.id.textView5); // Chữ "Quick Access"
+        TextView txtQuickAccessTitle = findViewById(R.id.textView5);
 
-        // Nếu là Guest thì không có dữ liệu Firebase để hiển thị bài gần nhất, ẩn khu vực này đi
-        if (isGuest) {
-            recentQuizView.setVisibility(View.GONE);
-            txtQuickAccessTitle.setVisibility(View.GONE);
-            return;
-        }
-
-        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        FirebaseUser currentUser = mAuth.getCurrentUser();
         if (currentUser == null) return;
 
         DatabaseReference ref = FirebaseDatabase.getInstance().getReference("Quizzes");
 
-        // Lấy tất cả quiz của user này giống như bên MyQuizzedActivity
         ref.orderByChild("creatorId").equalTo(currentUser.getUid())
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
                         if (!snapshot.exists()) {
-                            // Ẩn khu vực nếu người dùng chưa có bài quiz nào
                             recentQuizView.setVisibility(View.GONE);
                             txtQuickAccessTitle.setVisibility(View.GONE);
                             return;
@@ -214,7 +293,6 @@ public class UploadActivity extends BaseActivity {
                         DataSnapshot latestQuizSnap = null;
                         long maxTimestamp = 0;
 
-                        // Lọc ra bài quiz có thời gian tạo gần nhất
                         for (DataSnapshot quizSnap : snapshot.getChildren()) {
                             Long createdAt = quizSnap.child("createdAt").getValue(Long.class);
                             if (createdAt != null && createdAt > maxTimestamp) {
@@ -224,11 +302,9 @@ public class UploadActivity extends BaseActivity {
                         }
 
                         if (latestQuizSnap != null) {
-                            // Hiển thị lại UI nếu tìm thấy
                             recentQuizView.setVisibility(View.VISIBLE);
                             txtQuickAccessTitle.setVisibility(View.VISIBLE);
 
-                            // Lấy dữ liệu
                             String quizId = latestQuizSnap.getKey();
                             String title = latestQuizSnap.child("title").getValue(String.class);
                             Integer questionCount = latestQuizSnap.child("questionCount").getValue(Integer.class);
@@ -245,17 +321,14 @@ public class UploadActivity extends BaseActivity {
                             }
                             String infoText = dateStr + " • " + questionCount + " Qs";
 
-                            // Ánh xạ các thành phần con nằm bên trong item_quiz_layout.xml
                             TextView txtTitle = findViewById(R.id.txt_quiz_title);
                             TextView txtInfo = findViewById(R.id.txt_quiz_info);
                             TextView txtScore = findViewById(R.id.txt_quiz_score);
 
-                            // Đổ dữ liệu
                             txtTitle.setText(title);
                             txtInfo.setText(infoText);
                             txtScore.setText(score + "%");
 
-                            // Bắt sự kiện Click vào thẻ để chuyển sang màn hình Chi tiết giống MyQuizzedActivity
                             long finalMaxTimestamp = maxTimestamp;
                             recentQuizView.setOnClickListener(v -> {
                                 Intent intent = new Intent(UploadActivity.this, QuestionDetailActivity.class);
@@ -268,8 +341,7 @@ public class UploadActivity extends BaseActivity {
 
                     @Override
                     public void onCancelled(@NonNull DatabaseError error) {
-                        // Xử lý lỗi nếu có
-                        Log.e("UploadActivity", "Lỗi tải Recent Quiz: " + error.getMessage());
+                        Log.e("UploadActivity", "Failed to load Recent Quiz: " + error.getMessage());
                     }
                 });
     }
