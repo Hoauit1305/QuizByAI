@@ -79,11 +79,18 @@
             android:layout_marginVertical="10dp"/>
 
         <Button
-            android:id="@+id/btn_signin_guest"
+            android:id="@+id/btn_signin_email"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Continue as Guest"
+            android:text="Sign in with Email"
+            android:textSize="14sp"
+            android:fontFamily="@font/roboto"
+            android:textStyle="bold"
             app:backgroundTint="@color/primary_white"
+            app:icon="@drawable/mail_24px"
+            app:iconGravity="textStart"
+            app:iconSize="30dp"
+            app:iconTint="@null"
             android:textColor="@color/black"
             android:layout_marginHorizontal="25dp"/>
     </LinearLayout>
