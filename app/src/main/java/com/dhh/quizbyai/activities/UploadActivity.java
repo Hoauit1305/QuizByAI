@@ -331,7 +331,7 @@ public class UploadActivity extends BaseActivity {
                             // 2. ÁNH XẠ VÀ HIỂN THỊ EMOJI
                             TextView tvTopicEmoji = findViewById(R.id.tvTopicEmoji);
                             if (tvTopicEmoji != null) {
-                                tvTopicEmoji.setText(topicEmoji != null && !topicEmoji.isEmpty() ? topicEmoji : "📝");
+                                tvTopicEmoji.setText(topicEmoji);
                             }
 
                             txtTitle.setText(title);

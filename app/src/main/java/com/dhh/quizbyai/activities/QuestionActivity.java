@@ -175,7 +175,7 @@ public class QuestionActivity extends AppCompatActivity {
         // Ghi nhận đáp án người dùng chọn vào danh sách
         userAnswersList.add(selectedOption.trim());
 
-        boolean isCorrect = selectedOption.trim().equalsIgnoreCase(correctAnswer.trim());
+        boolean isCorrect = isAnswerMatch(selectedOption, correctAnswer);
         if (isCorrect) {
             selectedBtn.setBackgroundTintList(ColorStateList.valueOf(COLOR_CORRECT));
             correctAnswersCount++;
@@ -241,11 +241,10 @@ public class QuestionActivity extends AppCompatActivity {
     }
 
     private void highlightCorrectAnswer(String correctAnswer) {
-        String cleanCorrect = correctAnswer.trim();
-        if (btnA.getText().toString().trim().equalsIgnoreCase(cleanCorrect)) btnA.setBackgroundTintList(ColorStateList.valueOf(COLOR_CORRECT));
-        else if (btnB.getText().toString().trim().equalsIgnoreCase(cleanCorrect)) btnB.setBackgroundTintList(ColorStateList.valueOf(COLOR_CORRECT));
-        else if (btnC.getText().toString().trim().equalsIgnoreCase(cleanCorrect)) btnC.setBackgroundTintList(ColorStateList.valueOf(COLOR_CORRECT));
-        else if (btnD.getText().toString().trim().equalsIgnoreCase(cleanCorrect)) btnD.setBackgroundTintList(ColorStateList.valueOf(COLOR_CORRECT));
+        if (isAnswerMatch(btnA.getText().toString(), correctAnswer)) btnA.setBackgroundTintList(ColorStateList.valueOf(COLOR_CORRECT));
+        else if (isAnswerMatch(btnB.getText().toString(), correctAnswer)) btnB.setBackgroundTintList(ColorStateList.valueOf(COLOR_CORRECT));
+        else if (isAnswerMatch(btnC.getText().toString(), correctAnswer)) btnC.setBackgroundTintList(ColorStateList.valueOf(COLOR_CORRECT));
+        else if (isAnswerMatch(btnD.getText().toString(), correctAnswer)) btnD.setBackgroundTintList(ColorStateList.valueOf(COLOR_CORRECT));
     }
 
     private void moveToNextQuestionWithDelay() {
@@ -288,6 +287,7 @@ public class QuestionActivity extends AppCompatActivity {
     }
 
     // --- HÀM LƯU LỊCH SỬ CHƠI SOLO VÀO FIREBASE ---
+    // --- HÀM LƯU LỊCH SỬ CHƠI SOLO VÀO FIREBASE ---
     private void saveSoloHistory(int finalScorePercent) {
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         if (currentUser == null || quizId == null) {
@@ -296,22 +296,48 @@ public class QuestionActivity extends AppCompatActivity {
             return;
         }
 
-        DatabaseReference historyRef = FirebaseDatabase.getInstance()
+        DatabaseReference quizRef = FirebaseDatabase.getInstance()
                 .getReference("Quizzes")
-                .child(quizId)
-                .child("history");
+                .child(quizId);
 
         Map<String, Object> attemptData = new HashMap<>();
         attemptData.put("timestamp", System.currentTimeMillis());
         attemptData.put("score", finalScorePercent);
-        // Lưu kèm danh sách đáp án để xem lại ở ReviewQuizActivity
         attemptData.put("userAnswers", userAnswersList);
 
-        historyRef.push().setValue(attemptData).addOnSuccessListener(aVoid -> {
-            Toast.makeText(QuestionActivity.this, "Đã lưu kết quả! Điểm: " + finalScorePercent + "%", Toast.LENGTH_LONG).show();
-            finish();
+        // Bước 1: Đẩy lịch sử làm bài mới nhất lên nhánh "history"
+        quizRef.child("history").push().setValue(attemptData).addOnSuccessListener(aVoid -> {
+
+            // Bước 2: Sau khi đẩy xong, đọc lại TOÀN BỘ nhánh "history" để tìm ra điểm cao nhất
+            quizRef.child("history").addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    int maxScore = 0;
+
+                    // Quét qua tất cả các lần làm bài (Bao gồm cả lần 1: 0% và lần 2: 60%)
+                    for (DataSnapshot historySnap : snapshot.getChildren()) {
+                        Integer score = historySnap.child("score").getValue(Integer.class);
+                        if (score != null && score > maxScore) {
+                            maxScore = score; // Cập nhật lại maxScore nếu tìm thấy số lớn hơn
+                        }
+                    }
+
+                    // Bước 3: Ghi đè số lớn nhất tìm được ra ngoài node gốc
+                    quizRef.child("score").setValue(maxScore);
+
+                    Toast.makeText(QuestionActivity.this, "Đã lưu kết quả! Điểm của bạn: " + finalScorePercent + "%", Toast.LENGTH_LONG).show();
+                    finish();
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
+                    Toast.makeText(QuestionActivity.this, "Đã lưu, nhưng lỗi đồng bộ điểm cao nhất!", Toast.LENGTH_SHORT).show();
+                    finish();
+                }
+            });
+
         }).addOnFailureListener(e -> {
-            Toast.makeText(QuestionActivity.this, "Lỗi lưu kết quả!", Toast.LENGTH_SHORT).show();
+            Toast.makeText(QuestionActivity.this, "Lỗi khi lưu lịch sử!", Toast.LENGTH_SHORT).show();
             finish();
         });
     }
@@ -434,5 +460,14 @@ public class QuestionActivity extends AppCompatActivity {
                 finish();
             }
         });
+    }
+    // Hàm hỗ trợ kiểm tra xem Option người dùng bấm có khớp với Answer trên Firebase không
+    private boolean isAnswerMatch(String selectedOption, String correctAnswer) {
+        String cleanSelected = selectedOption.trim();
+        String cleanCorrect = correctAnswer.trim();
+
+        return cleanSelected.equalsIgnoreCase(cleanCorrect) ||
+                cleanSelected.toUpperCase().startsWith(cleanCorrect.toUpperCase() + ".") ||
+                cleanSelected.toUpperCase().startsWith(cleanCorrect.toUpperCase() + " ");
     }
 }

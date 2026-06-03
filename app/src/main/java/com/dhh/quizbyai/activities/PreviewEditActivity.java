@@ -83,8 +83,15 @@ public class PreviewEditActivity extends AppCompatActivity {
                         // Tìm vị trí của đáp án đúng trong mảng options
                         int correctIdx = 0;
                         if(q.getOptions() != null) {
+                            String correctAns = q.getAnswer().trim(); // Lấy đáp án chuẩn (có thể là "B" hoặc "B. Đáp án...")
+
                             for (int i = 0; i < q.getOptions().size(); i++) {
-                                if (q.getOptions().get(i).trim().equals(q.getAnswer().trim())) {
+                                String optionText = q.getOptions().get(i).trim();
+
+                                // LOGIC MỚI: Khớp hoàn toàn HOẶC chữ cái đầu của Option giống với Answer (Kèm dấu chấm hoặc khoảng trắng)
+                                if (optionText.equalsIgnoreCase(correctAns) ||
+                                        optionText.toUpperCase().startsWith(correctAns.toUpperCase() + ".") ||
+                                        optionText.toUpperCase().startsWith(correctAns.toUpperCase() + " ")) {
                                     correctIdx = i;
                                     break;
                                 }

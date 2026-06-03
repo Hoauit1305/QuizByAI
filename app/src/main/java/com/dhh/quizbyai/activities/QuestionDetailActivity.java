@@ -125,7 +125,7 @@ public class QuestionDetailActivity extends BaseActivity {
 
                         // LẤY VÀ HIỂN THỊ EMOJI
                         String topicEmoji = snapshot.child("topic_emoji").getValue(String.class);
-                        txt_avt_quiz_emoji.setText(topicEmoji != null && !topicEmoji.isEmpty() ? topicEmoji : "📝");
+                        txt_avt_quiz_emoji.setText(topicEmoji);
                         // 3. Phân quyền: Kiểm tra xem user hiện tại có phải là người tạo Quiz không
                         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
 

@@ -165,8 +165,6 @@ public class MyQuizzedActivity extends BaseActivity {
 
         if (topicEmoji != null && !topicEmoji.isEmpty()) {
             tvTopicEmoji.setText(topicEmoji);
-        } else {
-            tvTopicEmoji.setText("📝"); // Mặc định nếu Firebase chưa có dữ liệu Emoji
         }
 
         // Set sự kiện khi nhấn vào cái khung xám này

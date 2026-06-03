@@ -126,18 +126,27 @@ public class ReviewQuizActivity extends AppCompatActivity {
             for (TextView optionView : optionViews) {
                 String optionText = optionView.getText().toString().trim();
 
-                // Luôn tô xanh đáp án đúng
-                if (optionText.equals(correctAns)) {
+                // 1. Luôn tô xanh đáp án chuẩn (Sử dụng hàm isAnswerMatch vì correctAns có thể chỉ là "A", "B")
+                if (isAnswerMatch(optionText, correctAns)) {
                     optionView.setBackgroundTintList(ColorStateList.valueOf(COLOR_CORRECT));
                 }
 
-                // Nếu User chọn đáp án này, và nó sai khác với đáp án chuẩn -> Tô đỏ
-                if (optionText.equals(userAns) && !optionText.equals(correctAns)) {
+                // 2. Nếu User chọn đáp án này, và nó KHÔNG khớp với đáp án chuẩn -> Tô đỏ
+                if (optionText.equals(userAns) && !isAnswerMatch(optionText, correctAns)) {
                     optionView.setBackgroundTintList(ColorStateList.valueOf(COLOR_WRONG));
                 }
             }
 
             containerReviewQuestions.addView(reviewView);
         }
+    }
+    // Hàm hỗ trợ kiểm tra chuỗi linh hoạt giống hệt bên QuestionActivity
+    private boolean isAnswerMatch(String selectedOption, String correctAnswer) {
+        String cleanSelected = selectedOption.trim();
+        String cleanCorrect = correctAnswer.trim();
+
+        return cleanSelected.equalsIgnoreCase(cleanCorrect) ||
+                cleanSelected.toUpperCase().startsWith(cleanCorrect.toUpperCase() + ".") ||
+                cleanSelected.toUpperCase().startsWith(cleanCorrect.toUpperCase() + " ");
     }
 }
