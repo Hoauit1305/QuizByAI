@@ -54,7 +54,7 @@ import com.google.firebase.auth.FirebaseUser;
 
 public class QuestionDetailActivity extends BaseActivity {
     ImageView img_avt_quiz;
-    TextView txt_name_quiz, txt_quiz_day, txt_NoQ, txt_total_time, txt_time_perQ;
+    TextView txt_name_quiz, txt_quiz_day, txt_NoQ, txt_total_time, txt_time_perQ, txt_avt_quiz_emoji;
     Button btn_start_quiz;
     Button btn_preview;
     ImageButton btn_delete_quiz;
@@ -91,7 +91,7 @@ public class QuestionDetailActivity extends BaseActivity {
         });
     }
     protected void initViews(){
-        img_avt_quiz = findViewById(R.id.img_avt_quiz);
+        txt_avt_quiz_emoji = findViewById(R.id.txt_avt_quiz_emoji);
         txt_name_quiz = findViewById(R.id.txt_name_quiz);
         txt_quiz_day = findViewById(R.id.txt_quiz_day);
         txt_NoQ = findViewById(R.id.txt_NoQ);
@@ -122,6 +122,10 @@ public class QuestionDetailActivity extends BaseActivity {
                         txt_time_perQ.setText(quiz.getTimePerQuestion() + "s");
                         txt_total_time.setText(quiz.getTotalTime());
                         currentTotalQuestions = quiz.getQuestionCount();
+
+                        // LẤY VÀ HIỂN THỊ EMOJI
+                        String topicEmoji = snapshot.child("topic_emoji").getValue(String.class);
+                        txt_avt_quiz_emoji.setText(topicEmoji != null && !topicEmoji.isEmpty() ? topicEmoji : "📝");
                         // 3. Phân quyền: Kiểm tra xem user hiện tại có phải là người tạo Quiz không
                         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
 

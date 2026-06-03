@@ -310,6 +310,9 @@ public class UploadActivity extends BaseActivity {
                             Integer questionCount = latestQuizSnap.child("questionCount").getValue(Integer.class);
                             Integer score = latestQuizSnap.child("score").getValue(Integer.class);
 
+                            // 1. ĐỌC THÊM EMOJI TỪ FIREBASE
+                            String topicEmoji = latestQuizSnap.child("topic_emoji").getValue(String.class);
+
                             if (title == null) title = "Untitled Quiz";
                             if (questionCount == null) questionCount = 0;
                             if (score == null) score = 0;
@@ -325,10 +328,15 @@ public class UploadActivity extends BaseActivity {
                             TextView txtInfo = findViewById(R.id.txt_quiz_info);
                             TextView txtScore = findViewById(R.id.txt_quiz_score);
 
+                            // 2. ÁNH XẠ VÀ HIỂN THỊ EMOJI
+                            TextView tvTopicEmoji = findViewById(R.id.tvTopicEmoji);
+                            if (tvTopicEmoji != null) {
+                                tvTopicEmoji.setText(topicEmoji != null && !topicEmoji.isEmpty() ? topicEmoji : "📝");
+                            }
+
                             txtTitle.setText(title);
                             txtInfo.setText(infoText);
                             txtScore.setText(score + "%");
-
                             long finalMaxTimestamp = maxTimestamp;
                             recentQuizView.setOnClickListener(v -> {
                                 Intent intent = new Intent(UploadActivity.this, QuestionDetailActivity.class);
