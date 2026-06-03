@@ -4,67 +4,74 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/black"
-    android:padding="20dp">
+    android:background="@color/black">
 
-    <TextView
-        android:id="@+id/textViewTitle"
+    <!-- Lớp layout con này sẽ giữ Padding 20dp để không bị ghi đè bởi Edge-to-Edge -->
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Preview / Edit Questions"
-        android:textColor="@color/primary_white"
-        android:textSize="22sp"
-        android:textStyle="bold"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:layout_height="match_parent"
+        android:padding="20dp">
 
-    <ScrollView
-        android:id="@+id/scrollViewQuestions"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginBottom="16dp"
-        android:scrollbars="none"
-        app:layout_constraintBottom_toTopOf="@+id/layout_buttons"
-        app:layout_constraintTop_toBottomOf="@+id/textViewTitle">
-
-        <LinearLayout
-            android:id="@+id/container_questions"
+        <TextView
+            android:id="@+id/textViewTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical" />
-    </ScrollView>
-
-    <LinearLayout
-        android:id="@+id/layout_buttons"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:weightSum="2"
-        app:layout_constraintBottom_toBottomOf="parent">
-
-        <Button
-            android:id="@+id/btn_cancel"
-            android:layout_width="0dp"
-            android:layout_height="60dp"
-            android:layout_marginEnd="10dp"
-            android:layout_weight="1"
-            android:backgroundTint="@color/secondary_white"
-            android:text="Hủy"
-            android:textColor="@color/black"
+            android:text="Preview / Edit Questions"
+            android:textColor="@color/primary_white"
+            android:textSize="22sp"
             android:textStyle="bold"
-            app:cornerRadius="15dp" />
+            app:layout_constraintTop_toTopOf="parent" />
 
-        <Button
-            android:id="@+id/btn_save"
-            android:layout_width="0dp"
-            android:layout_height="60dp"
-            android:layout_marginStart="10dp"
-            android:layout_weight="1"
-            android:backgroundTint="@color/primary_orange"
-            android:text="Lưu thay đổi"
-            android:textColor="@color/black"
-            android:textStyle="bold"
-            app:cornerRadius="15dp" />
-    </LinearLayout>
+        <ScrollView
+            android:id="@+id/scrollViewQuestions"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="16dp"
+            android:scrollbars="none"
+            app:layout_constraintBottom_toTopOf="@+id/layout_buttons"
+            app:layout_constraintTop_toBottomOf="@+id/textViewTitle">
+
+            <LinearLayout
+                android:id="@+id/container_questions"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+        </ScrollView>
+
+        <LinearLayout
+            android:id="@+id/layout_buttons"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:weightSum="2"
+            app:layout_constraintBottom_toBottomOf="parent">
+
+            <Button
+                android:id="@+id/btn_cancel"
+                android:layout_width="0dp"
+                android:layout_height="60dp"
+                android:layout_marginEnd="10dp"
+                android:layout_weight="1"
+                android:backgroundTint="@color/secondary_white"
+                android:text="Hủy"
+                android:textColor="@color/black"
+                android:textStyle="bold"
+                app:cornerRadius="15dp" />
+
+            <Button
+                android:id="@+id/btn_save"
+                android:layout_width="0dp"
+                android:layout_height="60dp"
+                android:layout_marginStart="10dp"
+                android:layout_weight="1"
+                android:backgroundTint="@color/primary_orange"
+                android:text="Lưu thay đổi"
+                android:textColor="@color/black"
+                android:textStyle="bold"
+                app:cornerRadius="15dp" />
+        </LinearLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

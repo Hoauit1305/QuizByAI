@@ -4,7 +4,7 @@ public class PlayerModel {
     private String name;
     private int score;
     private int answered;
-
+    private String uid;
     // Bắt buộc phải có constructor rỗng cho Firebase
     public PlayerModel() {
     }
@@ -33,4 +33,7 @@ public class PlayerModel {
 
     public int getAnswered() { return answered; }
     public void setAnswered(int answered) { this.answered = answered; }
+
+    public String getUid() { return uid; }
+    public void setUid(String uid) { this.uid = uid; }
 }

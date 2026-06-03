@@ -8,6 +8,7 @@ import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -19,10 +20,16 @@ import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.dhh.quizbyai.R;
+import com.dhh.quizbyai.models.PlayerModel;
 import com.dhh.quizbyai.models.QuestionModel;
+import com.dhh.quizbyai.models.QuizModel;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -30,6 +37,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -54,6 +62,9 @@ public class QuestionActivity extends AppCompatActivity {
     private final int COLOR_WRONG = Color.parseColor("#F44336");
     private final int COLOR_DISABLED = Color.parseColor("#9E9E9E");
     private int correctAnswersCount = 0;
+
+    // MẢNG LƯU LẠI LỊCH SỬ CHỌN ĐÁP ÁN CỦA NGƯỜI DÙNG ĐỂ REVIEW
+    private List<String> userAnswersList = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -161,6 +172,9 @@ public class QuestionActivity extends AppCompatActivity {
         disableAllButtons();
         setAllButtonsColor(COLOR_DISABLED);
 
+        // Ghi nhận đáp án người dùng chọn vào danh sách
+        userAnswersList.add(selectedOption.trim());
+
         boolean isCorrect = selectedOption.trim().equalsIgnoreCase(correctAnswer.trim());
         if (isCorrect) {
             selectedBtn.setBackgroundTintList(ColorStateList.valueOf(COLOR_CORRECT));
@@ -188,12 +202,14 @@ public class QuestionActivity extends AppCompatActivity {
                 .child(uid);
 
         Map<String, Object> updates = new HashMap<>();
-        // Tính điểm theo % hoặc số câu đúng tùy bạn, ở đây tôi tính theo số câu đúng
-        updates.put("score", correctAnswersCount); 
+        // Tính điểm theo %
+        int liveScore = (questionList.size() > 0) ? Math.round(((float) correctAnswersCount / questionList.size()) * 100) : 0;
+
+        updates.put("score", liveScore);
         updates.put("answered", currentQuestionIndex + 1);
 
-        playerRef.updateChildren(updates).addOnFailureListener(e -> 
-            Log.e(TAG, "Lỗi cập nhật Leaderboard: " + e.getMessage())
+        playerRef.updateChildren(updates).addOnFailureListener(e ->
+                Log.e(TAG, "Lỗi cập nhật Leaderboard: " + e.getMessage())
         );
     }
 
@@ -216,6 +232,10 @@ public class QuestionActivity extends AppCompatActivity {
         disableAllButtons();
         setAllButtonsColor(COLOR_DISABLED);
         highlightCorrectAnswer(correctAnswer);
+
+        // Ghi nhận là bỏ trống vì hết giờ
+        userAnswersList.add("");
+
         if (isMultiplayer && roomPin != null) updateProgressToRoom();
         moveToNextQuestionWithDelay();
     }
@@ -253,13 +273,166 @@ public class QuestionActivity extends AppCompatActivity {
     }
 
     private void finishQuiz() {
-        Toast.makeText(this, "Quiz Finished! Your score: " + correctAnswersCount, Toast.LENGTH_LONG).show();
-        finish();
+        if (countDownTimer != null) countDownTimer.cancel();
+
+        int totalQuestions = questionList.size();
+        int finalScorePercent = (totalQuestions > 0) ? Math.round(((float) correctAnswersCount / totalQuestions) * 100) : 0;
+
+        if (isMultiplayer) {
+            // NẾU LÀ NHIỀU NGƯỜI CHƠI -> BẬT BẢNG XẾP HẠNG
+            showFinalLeaderboard(finalScorePercent);
+        } else {
+            // NẾU CHƠI SOLO -> LƯU ĐIỂM RỒI MỚI THOÁT
+            saveSoloHistory(finalScorePercent);
+        }
+    }
+
+    // --- HÀM LƯU LỊCH SỬ CHƠI SOLO VÀO FIREBASE ---
+    private void saveSoloHistory(int finalScorePercent) {
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser == null || quizId == null) {
+            Toast.makeText(this, "Hoàn thành! Điểm: " + finalScorePercent + "%", Toast.LENGTH_LONG).show();
+            finish();
+            return;
+        }
+
+        DatabaseReference historyRef = FirebaseDatabase.getInstance()
+                .getReference("Quizzes")
+                .child(quizId)
+                .child("history");
+
+        Map<String, Object> attemptData = new HashMap<>();
+        attemptData.put("timestamp", System.currentTimeMillis());
+        attemptData.put("score", finalScorePercent);
+        // Lưu kèm danh sách đáp án để xem lại ở ReviewQuizActivity
+        attemptData.put("userAnswers", userAnswersList);
+
+        historyRef.push().setValue(attemptData).addOnSuccessListener(aVoid -> {
+            Toast.makeText(QuestionActivity.this, "Đã lưu kết quả! Điểm: " + finalScorePercent + "%", Toast.LENGTH_LONG).show();
+            finish();
+        }).addOnFailureListener(e -> {
+            Toast.makeText(QuestionActivity.this, "Lỗi lưu kết quả!", Toast.LENGTH_SHORT).show();
+            finish();
+        });
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
         if (countDownTimer != null) countDownTimer.cancel();
+    }
+
+    private void showFinalLeaderboard(int myFinalScore) {
+        BottomSheetDialog dialog = new BottomSheetDialog(this);
+        View sheetView = getLayoutInflater().inflate(R.layout.layout_bottom_sheet_waiting_room, null);
+        dialog.setContentView(sheetView);
+        dialog.setCancelable(false);
+        dialog.setCanceledOnTouchOutside(false);
+
+        TextView txtTitle = sheetView.findViewById(R.id.txt_room_pin);
+        TextView txtSubtitle = sheetView.findViewById(R.id.txt_player_count);
+        RecyclerView rvLeaderboard = sheetView.findViewById(R.id.rv_players);
+        Button btnLeave = sheetView.findViewById(R.id.btn_close_room);
+
+        sheetView.findViewById(R.id.btn_start_multiplayer).setVisibility(View.GONE);
+
+        txtTitle.setText("Final Results");
+        txtSubtitle.setText("Waiting for everyone to finish...");
+        btnLeave.setText("Save Quiz & Leave");
+
+        String myUid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        int totalQuestions = questionList.size();
+
+        List<PlayerModel> finalPlayers = new ArrayList<>();
+        com.dhh.quizbyai.adapters.FinalLeaderboardAdapter adapter = new com.dhh.quizbyai.adapters.FinalLeaderboardAdapter(finalPlayers, totalQuestions, myUid);
+        rvLeaderboard.setLayoutManager(new LinearLayoutManager(this));
+        rvLeaderboard.setAdapter(adapter);
+
+        DatabaseReference playersRef = FirebaseDatabase.getInstance().getReference("Rooms").child(roomPin).child("players");
+
+        playersRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                finalPlayers.clear();
+                for (DataSnapshot snap : snapshot.getChildren()) {
+                    PlayerModel p = snap.getValue(PlayerModel.class);
+                    if (p != null) {
+                        p.setUid(snap.getKey());
+                        finalPlayers.add(p);
+                    }
+                }
+                Collections.sort(finalPlayers, (p1, p2) -> Integer.compare(p2.getScore(), p1.getScore()));
+                adapter.notifyDataSetChanged();
+                txtSubtitle.setText("Match Completed!");
+            }
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {}
+        });
+
+        btnLeave.setOnClickListener(v -> {
+            dialog.dismiss();
+            cloneHostQuizToMyQuizzes(quizId, myFinalScore);
+        });
+
+        dialog.setOnShowListener(d -> {
+            BottomSheetDialog bsd = (BottomSheetDialog) d;
+            View bottomSheetInternal = bsd.findViewById(com.google.android.material.R.id.design_bottom_sheet);
+            if (bottomSheetInternal != null) {
+                com.google.android.material.bottomsheet.BottomSheetBehavior.from(bottomSheetInternal)
+                        .setState(com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED);
+            }
+        });
+
+        dialog.show();
+    }
+
+    private void cloneHostQuizToMyQuizzes(String qId, int finalScore) {
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser == null || qId == null) {
+            finish();
+            return;
+        }
+
+        String myUid = currentUser.getUid();
+        DatabaseReference originalQuizRef = FirebaseDatabase.getInstance().getReference("Quizzes").child(qId);
+        DatabaseReference myQuizzesRef = FirebaseDatabase.getInstance().getReference("Quizzes");
+
+        originalQuizRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (snapshot.exists()) {
+                    QuizModel clonedQuiz = snapshot.getValue(QuizModel.class);
+
+                    if (clonedQuiz != null) {
+                        clonedQuiz.setCreatorId(myUid);
+                        clonedQuiz.setCreatedAt(System.currentTimeMillis());
+                        clonedQuiz.setTitle("[Copy] " + clonedQuiz.getTitle());
+                        clonedQuiz.setScore(finalScore);
+
+                        DatabaseReference newQuizRef = myQuizzesRef.push();
+                        newQuizRef.setValue(clonedQuiz).addOnSuccessListener(aVoid -> {
+
+                            Map<String, Object> firstAttempt = new HashMap<>();
+                            firstAttempt.put("timestamp", System.currentTimeMillis());
+                            firstAttempt.put("score", finalScore);
+                            // Bổ sung lưu userAnswers cho trận đấu Multiplayer luôn
+                            firstAttempt.put("userAnswers", userAnswersList);
+
+                            newQuizRef.child("history").push().setValue(firstAttempt);
+
+                            Toast.makeText(QuestionActivity.this, "Đã lưu kết quả và sao chép Quiz!", Toast.LENGTH_LONG).show();
+                            finish();
+                        });
+                    }
+                } else {
+                    finish();
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                finish();
+            }
+        });
     }
 }

@@ -335,6 +335,7 @@ public class UploadActivity extends BaseActivity {
                                 intent.putExtra("QUIZ_ID", quizId);
                                 intent.putExtra("CREATED_AT", finalMaxTimestamp);
                                 startActivity(intent);
+                                overridePendingTransition(0, 0);
                             });
                         }
                     }

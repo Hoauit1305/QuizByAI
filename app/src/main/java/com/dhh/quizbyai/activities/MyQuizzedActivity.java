@@ -175,6 +175,7 @@ public class MyQuizzedActivity extends BaseActivity {
             intent.putExtra("QUIZ_ID", quizId); // Truyền ID sang màn hình QuestionDetail
             intent.putExtra("CREATED_AT", createdAt);
             startActivity(intent);
+            overridePendingTransition(0, 0);
         });
 
         // Thêm view này vào ScrollView
