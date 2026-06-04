@@ -37,6 +37,9 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.gson.Gson;
 import com.google.firebase.database.DatabaseReference;
 
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserFactory;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -45,6 +48,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 public class ConfigureQuizActivity extends BaseActivity {
 
@@ -125,7 +130,7 @@ public class ConfigureQuizActivity extends BaseActivity {
 
     private void handleGenerateClick() {
         if (fileUriString == null || fileUriString.isEmpty()) {
-            showError("Không tìm thấy file PDF!");
+            showError("Không tìm thấy file tài liệu!");
             return;
         }
 
@@ -135,36 +140,58 @@ public class ConfigureQuizActivity extends BaseActivity {
             return;
         }
 
-        Uri pdfUri = Uri.parse(fileUriString);
-        String docName = getFileNameFromUri(pdfUri);
+        Uri fileUri = Uri.parse(fileUriString);
+        String docName = getFileNameFromUri(fileUri);
 
         setLoadingState(true);
-        startAIQuizGeneration(pdfUri, docName);
+        startAIQuizGeneration(fileUri, docName);
     }
 
-    private void startAIQuizGeneration(Uri pdfUri, String docName) {
+    private void startAIQuizGeneration(Uri fileUri, String docName) {
         Log.d(TAG, "Starting AI generation...");
         GenerativeModel gm = new GenerativeModel(MODEL_NAME, API_KEY);
         GenerativeModelFutures model = GenerativeModelFutures.from(gm);
 
         try {
-            byte[] pdfBytes = getBytesFromUri(pdfUri);
+            Content content;
             String prompt = String.format(Locale.getDefault(),
-                    "Dựa trên tài liệu PDF này, hãy tạo %d câu hỏi trắc nghiệm. " +
-                            "Đồng thời, hãy phân tích nội dung và chọn 1 Emoji duy nhất đại diện cho chủ đề của tài liệu này (ví dụ: 💻 cho CNTT, 🧬 cho Sinh học). " +
-                             "Trả về định dạng JSON duy nhất với cấu trúc sau: {\"topic_emoji\": \"...\", \"questions\": [{\"question\": \"...\", \"options\": [\"...\"], \"answer\": \"...\"}]}",
+                    "Dựa trên tài liệu này, hãy tạo %d câu hỏi trắc nghiệm. " +
+                            "Đồng thời, hãy phân tích nội dung và chọn 1 Emoji duy nhất đại diện cho chủ đề của tài liệu này (ví dụ: \uD83D\uDCBB cho CNTT, \uD83E\uDDEC cho Sinh học). " +
+                            "Trả về định dạng JSON duy nhất với cấu trúc sau: {\"topic_emoji\": \"...\", \"questions\": [{\"question\": \"...\", \"options\": [\"...\"], \"answer\": \"...\"}]}",
                     selectedQuestionCount);
 
-            Content content = new Content.Builder()
-                    .addText(prompt)
-                    .addBlob("application/pdf", pdfBytes)
-                    .build();
+            // PHÂN LOẠI XỬ LÝ THEO ĐUÔI FILE
+            if (docName.toLowerCase().endsWith(".pdf")) {
+                // Đọc file PDF dưới dạng nhị phân như cũ
+                byte[] pdfBytes = getBytesFromUri(fileUri);
+                content = new Content.Builder()
+                        .addText(prompt)
+                        .addBlob("application/pdf", pdfBytes)
+                        .build();
 
+            } else if (docName.toLowerCase().endsWith(".docx")) {
+                // Đọc text từ DOCX và nối vào prompt
+                String docxText = extractTextFromDocx(fileUri);
+
+                if (docxText == null || docxText.isEmpty()) {
+                    handleError("Không thể đọc được văn bản từ file DOCX này.");
+                    return;
+                }
+
+                content = new Content.Builder()
+                        .addText(prompt + "\n\nNội dung tài liệu:\n" + docxText)
+                        .build();
+            } else {
+                handleError("Ứng dụng chỉ hỗ trợ file .pdf và .docx");
+                return;
+            }
+
+            // GỌI GEMINI API
             ListenableFuture<GenerateContentResponse> response = model.generateContent(content);
-            Futures.addCallback(response, new FutureCallback<>() {
+            Futures.addCallback(response, new FutureCallback<GenerateContentResponse>() {
                 @Override
                 public void onSuccess(GenerateContentResponse result) {
-                    processAIResponse(result.getText(), pdfUri, docName);
+                    processAIResponse(result.getText(), fileUri, docName);
                 }
 
                 @Override
@@ -173,12 +200,62 @@ public class ConfigureQuizActivity extends BaseActivity {
                 }
             }, ContextCompat.getMainExecutor(this));
 
-        } catch (IOException e) {
+        } catch (Exception e) {
             handleError("Lỗi đọc file: " + e.getMessage());
         }
     }
 
-    private void processAIResponse(String jsonOutput, Uri pdfUri, String docName) {
+    // --- HÀM BÓC TÁCH VĂN BẢN TỪ DOCX CHỐNG TRÀN BỘ NHỚ (OOM) ---
+    private String extractTextFromDocx(Uri uri) {
+        StringBuilder resultText = new StringBuilder();
+        try (InputStream is = getContentResolver().openInputStream(uri);
+             ZipInputStream zis = new ZipInputStream(is)) {
+
+            ZipEntry entry;
+            while ((entry = zis.getNextEntry()) != null) {
+                if (entry.getName().equals("word/document.xml")) {
+
+                    // Sử dụng XmlPullParser để đọc luồng XML từng chút một thay vì nạp cả file vào RAM
+                    XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
+                    factory.setNamespaceAware(true);
+                    XmlPullParser parser = factory.newPullParser();
+
+                    // Truyền thẳng luồng giải nén vào parser
+                    parser.setInput(zis, "UTF-8");
+
+                    int eventType = parser.getEventType();
+                    boolean inTextTag = false;
+
+                    while (eventType != XmlPullParser.END_DOCUMENT) {
+                        if (eventType == XmlPullParser.START_TAG) {
+                            // Bắt đầu thẻ <w:t>
+                            if ("t".equals(parser.getName())) {
+                                inTextTag = true;
+                            }
+                        } else if (eventType == XmlPullParser.TEXT) {
+                            // Lấy nội dung chữ bên trong thẻ
+                            if (inTextTag) {
+                                resultText.append(parser.getText());
+                            }
+                        } else if (eventType == XmlPullParser.END_TAG) {
+                            // Kết thúc thẻ </w:t>
+                            if ("t".equals(parser.getName())) {
+                                inTextTag = false;
+                            }
+                        }
+                        eventType = parser.next();
+                    }
+                    break;
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Lỗi đọc file DOCX: " + e.getMessage());
+            return null;
+        }
+        return resultText.toString();
+    }
+
+    private void processAIResponse(String jsonOutput, Uri fileUri, String docName) {
         if (jsonOutput == null || jsonOutput.isEmpty()) {
             handleError("AI không trả về dữ liệu.");
             return;
@@ -188,6 +265,7 @@ public class ConfigureQuizActivity extends BaseActivity {
         // Truyền trực tiếp kết quả JSON vào hàm lưu Database, để trống URL
         saveQuizToDatabase(jsonOutput, docName, "");
     }
+
     private void saveQuizLocally(Map<String, Object> quizData) {
         // 1. Mở "cuốn sổ tay" tên là "GuestQuizzes"
         SharedPreferences sharedPreferences = getSharedPreferences("GuestData", MODE_PRIVATE);
@@ -210,6 +288,7 @@ public class ConfigureQuizActivity extends BaseActivity {
 
         Log.d(TAG, "Đã lưu Quiz vào bộ nhớ máy (Chế độ Khách)");
     }
+
     private void saveQuizToDatabase(String jsonResult, String docName, String fileUrl) {
         try {
             String cleanJson = jsonResult.replaceAll("```json|```", "").trim();

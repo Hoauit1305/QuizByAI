@@ -213,7 +213,6 @@ public class UploadActivity extends BaseActivity {
         intent.setType("*/*");
         String[] mimeTypes = {
                 "application/pdf",
-                "application/msword", // .doc
                 "application/vnd.openxmlformats-officedocument.wordprocessingml.document" // .docx
         };
         intent.putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes);
